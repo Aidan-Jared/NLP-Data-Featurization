@@ -13,11 +13,5 @@ if __name__ == "__main__":
     #importing files and making the main corpus to work with
     table = pq.read_table('data/Amz_book_review_short.parquet')
     df = table.to_pandas()
-    corpus = df.review_body.values
-
-    corpus_FC = TextFormating(corpus, FullClean=True).__call__()
-    # for index, i in enumerate(corpus):
-    #     corpus[index] = nlp(i)
-    # stopwords = text.ENGLISH_STOP_WORDS
-    # vect = CountVectorizer(max_features=500, max_df=.85, min_df=2, stop_words=stopwords)
-    # vect.fit(corpus)
+    corpus = df.review_body.copy().values
+    TextFormating(corpus)() #takes in the corpus and removes stop words, punct, and lems all the words
