@@ -3,11 +3,11 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import pyarrow.parquet as pq
 import spacy
-from sklearn.feature_extraction import text
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 from sklearn.decomposition import LatentDirichletAllocation
 from sklearn.metrics import pairwise_distances
 from wordcloud import WordCloud
+from TextCleaning import TextFormating
 
 if __name__ == "__main__":
     #importing files and making the main corpus to work with
@@ -15,8 +15,9 @@ if __name__ == "__main__":
     df = table.to_pandas()
     corpus = df.review_body.values
 
-    nlp = spacy.load('en_core_web_sm')
-    doc = nlp(corpus)
+    corpus_FC = TextFormating(corpus, FullClean=True).__call__()
+    # for index, i in enumerate(corpus):
+    #     corpus[index] = nlp(i)
     # stopwords = text.ENGLISH_STOP_WORDS
     # vect = CountVectorizer(max_features=500, max_df=.85, min_df=2, stop_words=stopwords)
     # vect.fit(corpus)
