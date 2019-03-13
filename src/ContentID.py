@@ -22,43 +22,58 @@ if __name__ == "__main__":
     TextFormating(corpus)() #takes in the corpus and removes stop words, punct, and lems all the words
     
     text_vect = Pipeline([
-                        ('vect', CountVectorizer()),
+                        ('vect', CountVectorizer(max_features=500)),
                         ('tfidf', TfidfTransformer())
     ])
-    corpus_vect = text_vect.fit_transform(corpus)
+    corpus_vect = text_vect.fit_transform(corpus).todense()
     X_train, X_test, y_train, y_test = train_test_split(corpus_vect, y, test_size=0.33, random_state=42)
     Models = ModelMaker(X_train, y_train)
 
     # Random Forests
-    param_grid_random_forest = {
-        'max_depth': [3,None],
-        'max_features' : ['sqrt', 'log2', None],
-        'min_samples_split': [4,5],
-        'min_samples_leaf': [1,2],
-        'bootstrap': [True, False],
-        'n_estimators': [1,5,10,20,40],
-        'random_state': [42]
-    }
+    # param_grid_random_forest = {
+    #     'max_depth': [3,None],
+    #     'max_features' : ['sqrt', 'log2', None],
+    #     'min_samples_split': [4,5],
+    #     'min_samples_leaf': [1,2],
+    #     'bootstrap': [True, False],
+    #     'n_estimators': [1,5,10,20,40],
+    #     'random_state': [42]
+    # }
 
-    RandomForestclf, RandomForestsBestParams = Models.Random_Forest(param_grid_random_forest)
-    print(RandomForestsBestParams)
-    y_pred = RandomForestclf.predict(X_test)
-    RandomForestAcc = np.mean(y_pred == y_test)
-    print(RandomForestAcc)
+    # RandomForestclf, RandomForestsBestParams = Models.Random_Forest(param_grid_random_forest)
+    # print(RandomForestsBestParams)
+    # y_pred = RandomForestclf.predict(X_test)
+    # RandomForestAcc = np.mean(y_pred == y_test)
+    # print(RandomForestAcc)
 
-    # Gradient Boosting
-    param_grid_grad_boost = {
-        'max_depth': [3,4,5,6] ,
-        'subsample': [1,.5,.25],
-        'max_features' : ['sqrt', 'log2', None],
-        'min_samples_split': [4,5],
-        'min_samples_leaf': [10,20,30,40],
-        'n_estimators': [1,5,10,20,40],
-        'random_state': [42]
-    }
+    # # Gradient Boosting
+    # param_grid_grad_boost = {
+    #     'max_depth': [3,4,5,6] ,
+    #     'subsample': [1,.5,.25],
+    #     'max_features' : ['sqrt', 'log2', None],
+    #     'min_samples_split': [4,5],
+    #     'min_samples_leaf': [10,20,30,40],
+    #     'n_estimators': [1,5,10,20,40],
+    #     'random_state': [42]
+    # }
 
-    GradientBoostclf, GradientBoostBestParams = Models.Grad_Boost(param_grid_grad_boost)
-    print(GradientBoostBestParams)
-    y_pred = GradientBoostclf.predict(X_test)
-    GradientBoostAcc = np.mean(y_pred == y_test)
-    print(GradientBoostAcc)
+    # GradientBoostclf, GradientBoostBestParams = Models.Grad_Boost(param_grid_grad_boost)
+    # print(GradientBoostBestParams)
+    # y_pred = GradientBoostclf.predict(X_test)
+    # GradientBoostAcc = np.mean(y_pred == y_test)
+    # print(GradientBoostAcc)
+
+    # # Multinomial Naive Bayes
+    # param_grid_Multinomial = {
+    #     'alpha': [0,.25,.5,.75,1] ,
+    #     'fit_prior': [True, False]
+    # }
+
+    # MultinomialNBclf, MultinomialNBBestParams = Models.Naive_Bayes(param_grid_Multinomial, Plot=False)
+    # print(MultinomialNBBestParams)
+    # y_pred = MultinomialNBclf.predict(X_test)
+    # MultinomialNBAcc = np.mean(y_pred == y_test)
+    # print(MultinomialNBAcc)
+
+    # MLPNN
+    model = Models.MLPNN(X_test, y_test, 40,500,.1)
