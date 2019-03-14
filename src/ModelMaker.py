@@ -22,8 +22,8 @@ class ModelMaker(object):
         if GridSearch == True:
             RandomForestclf = RandomForestClassifier()
             search = self.Grid_Search(RandomForestclf, param_grid)
-            if Plot == True:
-                self.plot_results(search)
+            # if Plot == True:
+            #     self.plot_results(search)
             return search.best_estimator_, search.best_params_
         else:
             RandomForestclf = RandomForestClassifier(param_grid).fit(self.X,self.y)
@@ -33,8 +33,8 @@ class ModelMaker(object):
         if GridSearch == True:
             GradientBoostingclf = GradientBoostingClassifier()
             search = self.Grid_Search(GradientBoostingclf, param_grid)
-            if Plot == True:
-                self.plot_results(search)
+            # if Plot == True:
+            #     self.plot_results(search)
             return search.best_estimator_, search.best_params_
         else:
             GradientBoostingclf = GradientBoostingClassifier(param_grid).fit(self.X,self.y)
@@ -44,8 +44,8 @@ class ModelMaker(object):
         if GridSearch == True:
             MultinomialNBclf = MultinomialNB()
             search = self.Grid_Search(MultinomialNBclf, param_grid)
-            if Plot == True:
-                self.plot_results(search)
+            # if Plot == True:
+            #     self.plot_results(search)
             return search.best_estimator_, search.best_params_
         else:
             MultinomialNBclf = MultinomialNB(param_grid).fit(self.X,self.y)
@@ -55,12 +55,13 @@ class ModelMaker(object):
         y_train_ohe = np_utils.to_categorical(self.y)
         model = self.build_MLPNN(y_train_ohe)
         tensorboard = TensorBoard(log_dir='./logs', histogram_freq=2, batch_size=40, write_graph=True, write_grads=True, write_images=True)
-        earlystop = EarlyStopping(monitor='loss', min_delta=1e-4,patience=0, verbose=0,mode='auto')
-        model.fit(self.X, y_train_ohe, epochs=epoch, batch_size=batch_size, verbose=1, validation_split=valaidation_split, callbacks=[tensorboard, earlystop])
+        #earlystop = EarlyStopping(monitor='loss', min_delta=1e-5,patience=0, verbose=0,mode='auto')
+        model.fit(self.X, y_train_ohe, epochs=epoch, batch_size=batch_size, verbose=1, validation_split=valaidation_split, callbacks=[tensorboard]) # , earlystop
         self.print_output(model, X_test, y_test, 42)
-        return model
+        y_test_pred = model.predict_classes(X_test, verbose=0)
+        return model, y_test_pred
     
-    def build_MLPNN(self, y_train_ohe, num_neurons_in_layer = 12, activation = 'relu', dense = 1):
+    def build_MLPNN(self, y_train_ohe, num_neurons_in_layer = 20, activation = 'relu', dense = 1):
         model = Sequential()
         num_inputs = self.X.shape[1]
         num_classes = y_train_ohe.shape[1]
@@ -103,33 +104,33 @@ class ModelMaker(object):
         search.fit(self.X, self.y)
         return search
 
-    def plot_results(self, model, param = 'n_estimators', name = 'Num Trees'):
-        param_name = 'param_%s' % param
+    # def plot_results(self, model, param = 'n_estimators', name = 'Num Trees'):
+    #     param_name = 'param_%s' % param
 
-        # Extract information from the cross validation model
-        train_scores = model.cv_results_['mean_train_score']
-        test_scores = model.cv_results_['mean_test_score']
-        train_time = model.cv_results_['mean_fit_time']
-        param_values = list(model.cv_results_[param_name])
+    #     # Extract information from the cross validation model
+    #     train_scores = model.cv_results_['mean_train_score']
+    #     test_scores = model.cv_results_['mean_test_score']
+    #     train_time = model.cv_results_['mean_fit_time']
+    #     param_values = list(model.cv_results_[param_name])
         
-        # Plot the scores over the parameter
-        plt.subplots(1, 2, figsize=(10, 6))
-        plt.subplot(121)
-        plt.plot(param_values, train_scores, 'bo-', label = 'train')
-        plt.plot(param_values, test_scores, 'go-', label = 'test')
-        plt.ylim(ymin = -10, ymax = 0)
-        plt.legend()
-        plt.xlabel(name)
-        plt.ylabel('Neg Mean Absolute Error')
-        plt.title('Score vs %s' % name)
+    #     # Plot the scores over the parameter
+    #     plt.subplots(1, 2, figsize=(10, 6))
+    #     plt.subplot(121)
+    #     plt.plot(param_values, train_scores, 'bo-', label = 'train')
+    #     plt.plot(param_values, test_scores, 'go-', label = 'test')
+    #     plt.ylim(ymin = -10, ymax = 0)
+    #     plt.legend()
+    #     plt.xlabel(name)
+    #     plt.ylabel('Neg Mean Absolute Error')
+    #     plt.title('Score vs %s' % name)
         
-        plt.subplot(122)
-        plt.plot(param_values, train_time, 'ro-')
-        plt.ylim(ymin = 0.0, ymax = 2.0)
-        plt.xlabel(name)
-        plt.ylabel('Train Time (sec)')
-        plt.title('Training Time vs %s' % name)
+    #     plt.subplot(122)
+    #     plt.plot(param_values, train_time, 'ro-')
+    #     plt.ylim(ymin = 0.0, ymax = 2.0)
+    #     plt.xlabel(name)
+    #     plt.ylabel('Train Time (sec)')
+    #     plt.title('Training Time vs %s' % name)
         
         
-        plt.tight_layout(pad = 4)
-        plt.show()
+    #     plt.tight_layout(pad = 4)
+    #     plt.show()
