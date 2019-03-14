@@ -51,16 +51,16 @@ class ModelMaker(object):
             MultinomialNBclf = MultinomialNB(param_grid).fit(self.X,self.y)
             return MultinomialNBclf
 
-    def MLPNN(self, X_test, y_test, epoch, batch_size, valaidation_split):
+    def MLPNN(self, X_test, y_test, epoch = 200, batch_size = 40, valaidation_split= .1):
         y_train_ohe = np_utils.to_categorical(self.y)
         model = self.build_MLPNN(y_train_ohe)
         tensorboard = TensorBoard(log_dir='./logs', histogram_freq=2, batch_size=40, write_graph=True, write_grads=True, write_images=True)
-        earlystop = EarlyStopping(monitor='accuracy', min_delta=.1,patience=0, verbose=0,mode='auto')
-        model.fit(self.X, y_train_ohe, epochs=epoch, batch_size=40, verbose=1, validation_split=valaidation_split, callbacks=[tensorboard, earlystop])
+        earlystop = EarlyStopping(monitor='loss', min_delta=1e-4,patience=0, verbose=0,mode='auto')
+        model.fit(self.X, y_train_ohe, epochs=epoch, batch_size=batch_size, verbose=1, validation_split=valaidation_split, callbacks=[tensorboard, earlystop])
         self.print_output(model, X_test, y_test, 42)
         return model
     
-    def build_MLPNN(self, y_train_ohe, num_neurons_in_layer = 12, activation = 'tanh', dense = 1):
+    def build_MLPNN(self, y_train_ohe, num_neurons_in_layer = 12, activation = 'relu', dense = 1):
         model = Sequential()
         num_inputs = self.X.shape[1]
         num_classes = y_train_ohe.shape[1]
@@ -71,13 +71,15 @@ class ModelMaker(object):
                 kernel_initializer='uniform',
                 activation= activation
             ))
+        
         model.add(Dense(
                     units=num_classes,
                     input_dim=num_neurons_in_layer,
                     kernel_initializer='uniform',
                     activation='softmax'
                 ))
-        sgd = SGD(lr=0.001, decay=1e-7, momentum=.9) # learning rate, weight decay, momentum; using stochastic gradient descent (keep)
+
+        sgd = SGD(lr=0.001, decay=1e-7, momentum=.9) # learning rate, weight decay, momentum; using stochastic gradient descent
         model.compile(loss='categorical_crossentropy', optimizer=sgd, metrics=["accuracy"] )
         return model
 

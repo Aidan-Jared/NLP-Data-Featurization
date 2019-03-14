@@ -12,11 +12,10 @@ if __name__ == "__main__":
 
     #only select the US marketplace
     mask = df['marketplace'] == 'US'
-    df = df[mask]
-
+    df = df[mask].dropna()
     # Cleaning out markdown formating
-    df_test, df_debug = train_test_split(df, test_size = .001, random_state=42)
-    # df_debug.to_csv('data/Amz_book_review_short.csv')
+    df_thing, df_debug = train_test_split(df,test_size=.001, random_state=42, stratify=df['star_rating'])
+
     for index, i in enumerate(df_debug['review_body']):
         html = markdown(i)
         Text = ' '.join(BeautifulSoup(html).findAll(text=True))
