@@ -5,10 +5,9 @@ import pyarrow.parquet as pq
 from ModelMaker import ModelMaker
 from sklearn.feature_extraction.text import TfidfTransformer, CountVectorizer
 from sklearn.model_selection import train_test_split, GridSearchCV
-from sklearn.ensemble import RandomForestClassifier
 from sklearn.decomposition import LatentDirichletAllocation, NMF, PCA
 from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import pairwise_distances
+from sklearn.metrics import pairwise_distances, mean_squared_error
 from sklearn.pipeline import Pipeline
 from wordcloud import WordCloud
 from TextCleaning import TextFormating
@@ -66,44 +65,45 @@ if __name__ == "__main__":
     #formating the text
     y = df.star_rating.values
     corpus = df.review_body.copy().values
-    TextFormating(corpus)() #takes in the corpus and removes stop words, punct, and lems all the words
+    corpus = TextFormating(corpus)() #takes in the corpus and removes stop words, punct, and lems all the words
     
     #vectorizing the text
-    text_vect = Pipeline([
-                        ('vect', CountVectorizer(max_features=5000, max_df=.85, min_df=2)),
-                        ('tfidf', TfidfTransformer())
-    ])
+    # text_vect = Pipeline([
+    #                     ('vect', CountVectorizer(max_features=5000, max_df=.85, min_df=2)),
+    #                     ('tfidf', TfidfTransformer())
+    # ])
 
-    corpus_vect = text_vect.fit_transform(corpus).todense()
-    # scaler = StandardScaler(copy=True, with_mean=True, with_std=True)
-    # corpus_vect = scaler.fit_transform(corpus_vect)
-    pca = PCA(n_components=2)
-    corpus_pca = pca.fit(corpus_vect)
+    # corpus_vect = text_vect.fit_transform(corpus).todense()
+    # # scaler = StandardScaler(copy=True, with_mean=True, with_std=True)
+    # # corpus_vect = scaler.fit_transform(corpus_vect)
+    # LDA = LatentDirichletAllocation(n_components=5)
+    # theta = LDA.fit_transform(corpus_vect)
     
-    # fig, ax = plt.subplots(figsize=(8,6))
-    # scree_plot(ax, corpus_pca, title='Test1', n_components_to_plot=6)
-    # plt.show()
+    # # fig, ax = plt.subplots(figsize=(8,6))
+    # # scree_plot(ax, pca, title='Test1', n_components_to_plot=20)
+    # # plt.show()
 
-    X_train, X_test, y_train, y_test = train_test_split(corpus_vect, y, test_size=0.33, random_state=42, stratify=y)
+    X_train, X_test, y_train, y_test = train_test_split(np.asarray(corpus), y, test_size=0.33, random_state=42, stratify=y)
 
     #applying SMOTE to Vectors
-    smt = SMOTE(random_state=42, k_neighbors=1)
+    smt = SMOTE(random_state=42, k_neighbors=3)
     X_smt, y_smt = smt.fit_sample(X_train, y_train)
     df_temp = pd.DataFrame(y_smt, columns=['star_rating'])
     df_temp = df_temp['star_rating'].value_counts()
     df_temp.plot(kind='bar')
     plt.savefig('images/SMOTE_class_distributions.png')
 
-    Models = ModelMaker(X_train, y_train)
+    Models = ModelMaker(X_smt, y_smt)
 
     # # Random Forests
     # param_grid_random_forest = {
     #     'max_depth': [None],
+    #     'criterion' : ['mse'],
     #     'max_features' : ['sqrt', 'log2', None],
-    #     'min_samples_split': [3,4],
-    #     'min_samples_leaf': [1,2],
-    #     'bootstrap': [True],
-    #     'n_estimators': [20,30,40],
+    #     'min_samples_split': [4,5],
+    #     'min_samples_leaf': [1],
+    #     'bootstrap': [True, False],
+    #     'n_estimators': [40,50],
     #     'random_state': [42]
     # }
     # # Random_forests_best_params = {'bootstrap': True, 'max_depth': None, 'max_features': None, 'min_samples_leaf': 1, 'min_samples_split': 4, 'n_estimators': 20, 'random_state': 42}
@@ -111,12 +111,12 @@ if __name__ == "__main__":
     # RandomForestclf, RandomForestsBestParams = Models.Random_Forest(param_grid_random_forest, Plot=False)
     # print(RandomForestsBestParams)
     # y_pred_random_forest = RandomForestclf.predict(X_test)
-    # RandomForestAcc = np.mean(y_pred_random_forest == y_test)
-    # print(RandomForestAcc) # .65578
+    # RandomForestMSE = mean_squared_error(y_test, y_pred_random_forest)
+    # print(RandomForestMSE) # .65578
 
-    # # Gradient Boosting
+    # #Gradient Boosting
     # param_grid_grad_boost = {
-    #     'max_depth': [3,4, None] ,
+    #     'max_depth': [3,4, None],
     #     'subsample': [1,.5],
     #     'max_features' : ['sqrt', 'log2', None],
     #     'min_samples_split': [4,5],
@@ -129,8 +129,8 @@ if __name__ == "__main__":
     # GradientBoostclf, GradientBoostBestParams = Models.Grad_Boost(param_grid_grad_boost, Plot=False)
     # print(GradientBoostBestParams)
     # y_pred_grad_boost = GradientBoostclf.predict(X_test)
-    # GradientBoostAcc = np.mean(y_pred_grad_boost == y_test)
-    # print(GradientBoostAcc) #.65875
+    # GradientBoostMSE = mean_squared_error(y_test, y_pred_grad_boost)
+    # print(GradientBoostMSE) #.65875
 
     # # Multinomial Naive Bayes
     # param_grid_Multinomial = {
@@ -142,15 +142,16 @@ if __name__ == "__main__":
     # MultinomialNBclf, MultinomialNBBestParams = Models.Naive_Bayes(param_grid_Multinomial, Plot=False)
     # print(MultinomialNBBestParams)
     # y_pred_MNB = MultinomialNBclf.predict(X_test)
-    # MultinomialNBAcc = np.mean(y_pred_MNB == y_test)
-    # print(MultinomialNBAcc) # .65875
+    # MultinomialNBMSE = mean_squared_error(y_test, y_pred_MNB)
+    # print(MultinomialNBMSE) # .65875
 
     # MLPNN
-    model, y_pred_MLPNN = Models.MLPNN(X_test, y_test, epoch= 500, batch_size=10, valaidation_split=.1)
-    MLPNNAcc = np.sum(y_test == y_pred_MLPNN, axis=0) / X_test.shape[0]
+    model, y_pred_MLPNN = Models.MLPNN(X_smt, y_smt, epoch= 500, batch_size=10, valaidation_split=.1)
+    MLPNNMSE = mean_squared_error(y_test, y_pred_MLPNN)
+    print(np.mean((y_test - y_pred_MLPNN)**2))
 
     # comparing the models
-    # modelACC = {'Models': ['Random Forests', 'Gradient Boosting', 'Naive Bayes', 'MLP NN'], 'No PCA Accuracy' : [RandomForestAcc * 100, GradientBoostAcc * 100, MultinomialNBAcc * 100, MLPNNAcc * 100]}
+    # modelACC = {'Models': ['Random Forests', 'Gradient Boosting', 'MLP NN'], 'No PCA Accuracy' : [RandomForestMSE, GradientBoostMSE, MLPNNMSE]}
     # df_acc = pd.DataFrame.from_dict(modelACC)
     # df_acc.plot(kind='bar')
     # plt.show()

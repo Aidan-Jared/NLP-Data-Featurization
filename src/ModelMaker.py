@@ -2,14 +2,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.feature_extraction.text import TfidfTransformer, CountVectorizer
 from sklearn.model_selection import train_test_split, GridSearchCV
-from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
-from sklearn.naive_bayes import MultinomialNB
+from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
+# from sklearn.naive_bayes import MultinomialNB
 from sklearn.decomposition import LatentDirichletAllocation
 from sklearn.metrics import pairwise_distances
 from sklearn.pipeline import Pipeline
 from keras.utils import np_utils
 from keras.models import Sequential
-from keras.layers.core import Dense
+from keras.layers.core import Dense, Dropout
 from keras.optimizers import SGD
 from keras.callbacks import TensorBoard, EarlyStopping
 
@@ -17,54 +17,59 @@ class ModelMaker(object):
     def __init__(self, X, y):
         self.X = X
         self.y = y
+        self.weights = [
+                {5:1, 4:10},
+                {5:1, 3:10},
+                {5:1, 1:10},
+                {5:1, 2:10}
+            ]
     
     def Random_Forest(self, param_grid, GridSearch = True, Plot =True):
         if GridSearch == True:
-            RandomForestclf = RandomForestClassifier()
-            search = self.Grid_Search(RandomForestclf, param_grid)
+            
+            RandomForestReg = RandomForestRegressor()
+            search = self.Grid_Search(RandomForestReg, param_grid)
             # if Plot == True:
             #     self.plot_results(search)
             return search.best_estimator_, search.best_params_
         else:
-            RandomForestclf = RandomForestClassifier(param_grid).fit(self.X,self.y)
-            return RandomForestclf
+            RandomForestReg = RandomForestRegressor(param_grid).fit(self.X,self.y)
+            return RandomForestReg
 
     def Grad_Boost(self, param_grid, GridSearch = True, Plot =True):
         if GridSearch == True:
-            GradientBoostingclf = GradientBoostingClassifier()
-            search = self.Grid_Search(GradientBoostingclf, param_grid)
+            GradientBoostingReg = GradientBoostingRegressor()
+            search = self.Grid_Search(GradientBoostingReg, param_grid)
             # if Plot == True:
             #     self.plot_results(search)
             return search.best_estimator_, search.best_params_
         else:
-            GradientBoostingclf = GradientBoostingClassifier(param_grid).fit(self.X,self.y)
-            return GradientBoostingclf
+            GradientBoostingReg = GradientBoostingRegressor(param_grid).fit(self.X,self.y,sample_weight=self.weights)
+            return GradientBoostingReg
 
-    def Naive_Bayes(self, param_grid, GridSearch = True, Plot =True):
-        if GridSearch == True:
-            MultinomialNBclf = MultinomialNB()
-            search = self.Grid_Search(MultinomialNBclf, param_grid)
-            # if Plot == True:
-            #     self.plot_results(search)
-            return search.best_estimator_, search.best_params_
-        else:
-            MultinomialNBclf = MultinomialNB(param_grid).fit(self.X,self.y)
-            return MultinomialNBclf
+    # def Naive_Bayes(self, param_grid, GridSearch = True, Plot =True):
+    #     if GridSearch == True:
+    #         MultinomialNBclf = MultinomialNB()
+    #         search = self.Grid_Search(MultinomialNBclf, param_grid)
+    #         # if Plot == True:
+    #         #     self.plot_results(search)
+    #         return search.best_estimator_, search.best_params_
+    #     else:
+    #         MultinomialNBclf = MultinomialNB(param_grid).fit(self.X,self.y)
+    #         return MultinomialNBclf
 
     def MLPNN(self, X_test, y_test, epoch = 200, batch_size = 40, valaidation_split= .1):
-        y_train_ohe = np_utils.to_categorical(self.y)
-        model = self.build_MLPNN(y_train_ohe)
+        model = self.build_MLPNN()
         tensorboard = TensorBoard(log_dir='./logs', histogram_freq=2, batch_size=40, write_graph=True, write_grads=True, write_images=True)
-        #earlystop = EarlyStopping(monitor='loss', min_delta=1e-5,patience=0, verbose=0,mode='auto')
-        model.fit(self.X, y_train_ohe, epochs=epoch, batch_size=batch_size, verbose=1, validation_split=valaidation_split, callbacks=[tensorboard]) # , earlystop
-        self.print_output(model, X_test, y_test, 42)
-        y_test_pred = model.predict_classes(X_test, verbose=0)
+        #earlystop = EarlyStopping(monitor='loss', min_delta=1e-5,patience=10, verbose=0,mode='auto')
+        model.fit(self.X, self.y, epochs=epoch, batch_size=batch_size, verbose=1, validation_split=valaidation_split, callbacks=[tensorboard]) #, earlystop
+        # self.print_output(model, X_test, y_test, 42)
+        y_test_pred = model.predict(X_test, verbose=0)
         return model, y_test_pred
     
-    def build_MLPNN(self, y_train_ohe, num_neurons_in_layer = 20, activation = 'relu', dense = 1):
+    def build_MLPNN(self, num_neurons_in_layer = 20, activation = 'relu', dense = 1):
         model = Sequential()
         num_inputs = self.X.shape[1]
-        num_classes = y_train_ohe.shape[1]
         for _ in range(dense):
             model.add(Dense(
                 units=num_neurons_in_layer,
@@ -72,29 +77,30 @@ class ModelMaker(object):
                 kernel_initializer='uniform',
                 activation= activation
             ))
+        model.add(Dropout(.5))
         
         model.add(Dense(
-                    units=num_classes,
+                    units=1,
                     input_dim=num_neurons_in_layer,
                     kernel_initializer='uniform',
-                    activation='softmax'
+                    activation='relu'
                 ))
 
         sgd = SGD(lr=0.001, decay=1e-7, momentum=.9) # learning rate, weight decay, momentum; using stochastic gradient descent
-        model.compile(loss='categorical_crossentropy', optimizer=sgd, metrics=["accuracy"] )
+        model.compile(loss='mean_squared_error', optimizer=sgd)
         return model
 
-    def print_output(self, model, X_test, y_test, rng_seed):
-        '''prints model accuracy results'''
-        y_train_pred = model.predict_classes(self.X, verbose=0)
-        y_test_pred = model.predict_classes(X_test, verbose=0)
-        print('\nRandom number generator seed: {}'.format(rng_seed))
-        print('\nFirst 30 labels:      {}'.format(self.y[:30]))
-        print('First 30 predictions: {}'.format(y_train_pred[:30]))
-        train_acc = np.sum(self.y == y_train_pred, axis=0) / self.X.shape[0]
-        print('\nTraining accuracy: %.2f%%' % (train_acc * 100))
-        test_acc = np.sum(y_test == y_test_pred, axis=0) / X_test.shape[0]
-        print('Test accuracy: %.2f%%' % (test_acc * 100))
+    # def print_output(self, model, X_test, y_test, rng_seed):
+    #     '''prints model accuracy results'''
+    #     y_train_pred = model.predict(self.X, verbose=0)
+    #     y_test_pred = model.predict(X_test, verbose=0)
+    #     print('\nRandom number generator seed: {}'.format(rng_seed))
+    #     print('\nFirst 30 labels:      {}'.format(self.y[:30]))
+    #     print('First 30 predictions: {}'.format(y_train_pred[:30]))
+    #     train_acc = np.sum(self.y == y_train_pred, axis=0) / self.X.shape[0]
+    #     print('\nTraining accuracy: %.2f%%' % (train_acc * 100))
+    #     test_acc = np.sum(y_test == y_test_pred, axis=0) / X_test.shape[0]
+    #     print('Test accuracy: %.2f%%' % (test_acc * 100))
     
     def Grid_Search(self, model, param_grid):
         search = GridSearchCV(model, 
