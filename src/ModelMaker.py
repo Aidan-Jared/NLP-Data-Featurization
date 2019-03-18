@@ -5,12 +5,12 @@ from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
 # from sklearn.naive_bayes import MultinomialNB
 from sklearn.decomposition import LatentDirichletAllocation
-from sklearn.metrics import pairwise_distances
+from sklearn.metrics import mean_squared_error
 from sklearn.pipeline import Pipeline
 from keras.utils import np_utils
 from keras.models import Sequential
 from keras.layers.core import Dense, Dropout
-from keras.optimizers import SGD
+from keras.optimizers import Adadelta
 from keras.callbacks import TensorBoard, EarlyStopping
 
 class ModelMaker(object):
@@ -61,46 +61,51 @@ class ModelMaker(object):
     def MLPNN(self, X_test, y_test, epoch = 200, batch_size = 40, valaidation_split= .1):
         model = self.build_MLPNN()
         tensorboard = TensorBoard(log_dir='./logs', histogram_freq=2, batch_size=40, write_graph=True, write_grads=True, write_images=True)
-        #earlystop = EarlyStopping(monitor='loss', min_delta=1e-5,patience=10, verbose=0,mode='auto')
-        model.fit(self.X, self.y, epochs=epoch, batch_size=batch_size, verbose=1, validation_split=valaidation_split, callbacks=[tensorboard]) #, earlystop
-        # self.print_output(model, X_test, y_test, 42)
+        earlystop = EarlyStopping(monitor='loss', min_delta=1e-5,patience=30, verbose=0,mode='auto')
+        model.fit(self.X, self.y, epochs=epoch, batch_size=batch_size, verbose=1, validation_split=valaidation_split, callbacks=[tensorboard, earlystop]) #
+        self.print_output(model, X_test, y_test, 42)
         y_test_pred = model.predict(X_test, verbose=0)
-        return model, y_test_pred
+        return model, y_test_pred.T[0]
     
-    def build_MLPNN(self, num_neurons_in_layer = 20, activation = 'relu', dense = 1):
+    def build_MLPNN(self, num_neurons_in_layer = 100, activation = 'linear', dense = 1):
         model = Sequential()
         num_inputs = self.X.shape[1]
-        for _ in range(dense):
-            model.add(Dense(
-                units=num_neurons_in_layer,
+        model.add(Dense(
+                units=4,
                 input_dim=num_inputs,
                 kernel_initializer='uniform',
                 activation= activation
-            ))
-        model.add(Dropout(.5))
+        ))
+        model.add(Dense(
+            units=num_neurons_in_layer,
+            activation = activation
+        ))
+
+        model.add(Dropout(.25))
         
         model.add(Dense(
                     units=1,
                     input_dim=num_neurons_in_layer,
                     kernel_initializer='uniform',
-                    activation='relu'
+                    activation='linear'
                 ))
 
-        sgd = SGD(lr=0.001, decay=1e-7, momentum=.9) # learning rate, weight decay, momentum; using stochastic gradient descent
-        model.compile(loss='mean_squared_error', optimizer=sgd)
+        ada = Adadelta(lr=1.0, rho=0.95, epsilon=1e-08, decay=0.0)
+        model.compile(loss='mean_squared_error', optimizer=ada)
         return model
 
-    # def print_output(self, model, X_test, y_test, rng_seed):
-    #     '''prints model accuracy results'''
-    #     y_train_pred = model.predict(self.X, verbose=0)
-    #     y_test_pred = model.predict(X_test, verbose=0)
-    #     print('\nRandom number generator seed: {}'.format(rng_seed))
-    #     print('\nFirst 30 labels:      {}'.format(self.y[:30]))
-    #     print('First 30 predictions: {}'.format(y_train_pred[:30]))
-    #     train_acc = np.sum(self.y == y_train_pred, axis=0) / self.X.shape[0]
-    #     print('\nTraining accuracy: %.2f%%' % (train_acc * 100))
-    #     test_acc = np.sum(y_test == y_test_pred, axis=0) / X_test.shape[0]
-    #     print('Test accuracy: %.2f%%' % (test_acc * 100))
+    def print_output(self, model, X_test, y_test, rng_seed):
+        '''prints model accuracy results'''
+        y_train_pred = model.predict(self.X, verbose=0)
+        y_test_pred = model.predict(X_test, verbose=0)
+        y_test_pred = y_test_pred.T[0]
+        print('\nRandom number generator seed: {}'.format(rng_seed))
+        print('\nFirst 30 labels:      {}'.format(y_test[:30]))
+        print('First 30 predictions: {}'.format(y_test_pred[:30]))
+        train_MSE = mean_squared_error(self.y, y_train_pred)
+        print('\nTraining MSE: %.2f' % (train_MSE))
+        test_MSE = mean_squared_error(y_test, y_test_pred)
+        print('Test MSE: %.2f' % (test_MSE))
     
     def Grid_Search(self, model, param_grid):
         search = GridSearchCV(model, 

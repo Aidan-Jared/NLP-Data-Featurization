@@ -58,10 +58,11 @@ class TextFormating(object):
     '''
     
     '''
-    def __init__(self, X):
+    def __init__(self, X, Sentiment = True):
         self.X = X
         self.nlp = spacy.load('en_core_web_sm')
         self.sentiment = SentimentIntensityAnalyzer()
+        self.Sentiment = Sentiment
 
     def __call__(self):
         return [self._spacy_cleaner(i) for i in self.X]
@@ -87,5 +88,8 @@ class TextFormating(object):
                         final_tokens.append(sc_removed)
         joined = ' '.join(final_tokens)
         spell_corrected = re.sub(r'(.)\1+', r'\1\1', joined)
-        score = self.sentiment.polarity_scores(spell_corrected)
-        return [score['neg'], score['neu'], score['pos'], score['compound']]
+        if self.Sentiment:
+            score = self.sentiment.polarity_scores(spell_corrected)
+            return [score['neg'], score['neu'], score['pos'], score['compound']]
+        else:
+            return spell_corrected
