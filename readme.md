@@ -2,7 +2,7 @@
 
 ![alt_text](images/headImage.png)
 
-For this second capstone I decided to investigate how well the different NLP models perform. In order to test this out I decided to use the Amazon reveiw data set provided by Amazon because the data included many different writen reveiws along side the star reveiws given by each users. This alowed me to work with scalable data and to test how well my models were performing.
+For this second capstone I decided to investigate how well the different data vectorization methods perform. In order to test this out I decided to use the Amazon reveiw data set provided by Amazon because the data included many different writen reveiws along side the star reveiws given by each users. This alowed me to work with scalable data and to test how well the methods were performing.
 
 ## EDA
 
@@ -18,30 +18,32 @@ After this it was time to explore the star ratings and I found the following dis
 
 As you can see the data is very skewed towards high ratings with just about 2/3 of the data having a 5 star rating. After running some basic tests, I ended up finding that because of this skew, models loved to predict that no matter what the text was that a 5 star rating sounded really good.
 
-To fix this probelm I decided on two seperate techniques, SMOTE and PCA. By using PCA I reduced the total dimentionality which changed the models from looking at words to looking at topics of importance which I thought would make it easier to apply an acurate SMOTE to each of the topcs
-
-I train test split the data and ran then applied SMOTE to the training data in order to add more ratings for the less used ratings. This produced the following distribution which I know will produce better models:
+To fix this probelm I decided on SMOTE the data. In order to do this I train test split the data and ran then applied SMOTE to the training data in order to add more ratings for the less used ratings. This produced the following distribution which I know will produce better models:
 
 ![alt_text](images/SMOTE_class_distributions.png)
 
-## Models
+## Data Vectorization
 
-After the data cleaning it was time to build the models and figure out which ones performed the best. (something about which metrics to use). For each of the models I used Grid searching to figure out the best set of hyperperameters and give me the resulting model to find the models accuracy.
+Even though this project is focused on strings, we still need to vectorize the data so that the models we use to predict will understand the data its looking at. The most common way to do this is the Bag-of-Words model but there has been a new development called Doc2Words.
 
-### Random Forest
+### Bag-of-Words
 
-The Grid search found that using the following features produced the lowest mean squred error and an accuracy of 65% (subject to change)
+Bag-of-Words works by creating a matrix where the rows are the documents of the corpus and the columns are the vocabulary. After you build the Bag-of-Words model you tend to make it into a tfidf (Term Frequency Inverse Document frequency) matrix.
 
-### Gradient Boosting
+### Doc2Vec
 
-The Grid search found that using the following features produced the lowest mean squred error and an accuracy of 68% (subject to change)
+Word2Vec and Doc2Vec are recent developments in data science and NLP and I hope to show its power in this project. Word2Vec is decomposing any given document into a vector of a defined size where the larger the vector the more accurate it is. The advantages is that the vector retains document context and simular words will be represented simularly. For example in Bag-of-Words, Love and Like would be to seperate values in the matrix with no relation to eachother, but with Word2Vec, Love and like would be two simular vectors with a high simularity.
 
-### Naive Bayes
+![alt_text](images/Word2VecExample.png)
 
-The Grid search found that using the following features produced the lowest mean squred error and an accuracy of 65% (subject to change)
+In order to produce a word Vector an Autoencoder Neural Network is used where the inputs are feature vectors of the document and the output is a prediction for a word. Simular to Convolutional Neural Networks a window is moved over the document and selects the suronding words and trys to predict a word based on the context of the words around it. After training is done the weights become the Word Vectors.
 
-### MLP NN
+![alt_text](images/Doc2VecExample.png)
 
-Stuff
+Doc2Vec is very simular but it adds in the additional input of a document vector which as a result produces a vector for the entire Document and not just the words in the Document. (check with Taite about explanation)
+
+## Performance
+
+In order to test the performance of these models I decided to use the Random Forest Regressor and find the Mean Square Error for Bag-of-Words and Doc2Vec as well as the computational time in order to find which data vectorization method works the best
 
 ## Conclusion
