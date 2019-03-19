@@ -40,7 +40,7 @@ def Get_Corpus(fileName, get_y = True, is_WordVec = False, plot = False):
     
   corpus = df.review_body.copy().values
 
-def scree_plot(ax, pca, n_components_to_plot=8, title=None):
+def scree_plot(ax, pca, n_components_to_plot=8, title='PCA Scree Plot'):
     """Make a scree plot showing the variance explained (i.e. variance
     of the projections) for the principal components in a fit sklearn
     PCA object.
@@ -65,12 +65,6 @@ def scree_plot(ax, pca, n_components_to_plot=8, title=None):
     ax.plot(ind, vals, color='blue')
     ax.scatter(ind, vals, color='blue', s=50)
 
-    for i in range(num_components):
-        ax.annotate(r"{:2.2f}%".format(vals[i]), (ind[i]+0.2, vals[i]+0.005), va="bottom", ha="center", fontsize=12)
-
-    ax.set_xticklabels(ind, fontsize=12)
-    ax.set_ylim(0, max(vals) + 0.05)
-    ax.set_xlim(0 - 0.45, n_components_to_plot + 0.45)
     ax.set_xlabel("Principal Component", fontsize=12)
     ax.set_ylabel("Variance Explained (%)", fontsize=12)
     if title is not None:
@@ -86,12 +80,18 @@ def Smote(X, y, random_state = 42, k_neighbors=3, plot = False):
         plt.savefig('images/SMOTE_class_distributions.png')
       return X_smt, y_smt
 
+def ModelSplitting(X, y, test_size):
+    X_train, X_test, y_train, y_test = train_test_split(X,y, test_size=test_size, random_state=5, stratify=y)
+    return X_train, X_test, y_train, y_test
+
 if __name__ == "__main__":
-    y, corpus = Get_Corpus('data/Amz_book_review_short.parquet', plot=True)
+    y, corpus = Get_Corpus('data/Amz_book_review_short.parquet', plot=False)
     word_vec = Get_Corpus('data/Amz_book_review_short_vector.parquet', get_y=False, is_WordVec=True)
     
-    X_train_tfidf, X_test_tfidf, y_train_tfidf, y_test_tfidf = train_test_split(corpus, y, test_size=0.5, random_state=42, stratify=y)
-    X_train_vec, X_test_vec, y_train_vec, y_test_vec = train_test_split(word_vec, y, test_size=0.5, random_state=42, stratify=y)
+    corpus_big, corpus_short, y_big, y_short = ModelSplitting(corpus, y, .25)
+    word_vec, word_vec_short, y_big, y_short = ModelSplitting(word_vec, y, .25)
+    X_train_tfidf, X_test_tfidf, y_train_tfidf, y_test_tfidf = train_test_split(corpus_short, y_short, test_size=.2, random_state=42, stratify=y_short)
+    X_train_vec, X_test_vec, y_train_vec, y_test_vec = train_test_split(word_vec_short, y_short, test_size=.2, random_state=42, stratify=y_short)
     
     text_vect = Pipeline([
                         ('vect', CountVectorizer(max_features=5000, max_df=.85, min_df=2)),
@@ -100,12 +100,12 @@ if __name__ == "__main__":
 
     X_train_tfidf = text_vect.fit_transform(X_train_tfidf).todense()
     X_test_tfidf = text_vect.transform(X_test_tfidf)
-    pca = PCA(n_components=300)
+    pca = PCA(n_components=70)
     theta = pca.fit_transform(X_train_tfidf)
     
-    fig, ax = plt.subplots(figsize=(8,6))
-    scree_plot(ax, pca, title='Test1', n_components_to_plot=20)
-    plt.show()
+    # fig, ax = plt.subplots(figsize=(8,6))
+    # scree_plot(ax, pca, n_components_to_plot=5000)
+    # plt.savefig('images/Screeplot.png')
 
     X_smt_tfidf, y_smt_tfidf = Smote(X_train_tfidf, y_train_tfidf)
     X_smt_vec, y_smt_vec = Smote(X_train_vec, y_train_vec)
@@ -114,15 +114,16 @@ if __name__ == "__main__":
     Models_vec = ModelMaker(X_smt_vec, y_smt_vec)
 
     param_grid_random_forest = {
-        'max_depth': [None,3,4],
-        'max_features' : [None, 'sqrt', 'log2'],
-        'min_samples_split': [2,3],
+        'max_depth': [None,3],
+        'max_features' : ['sqrt', 'log2'],
+        'min_samples_split': [2,3,4],
         'min_samples_leaf': [1,2],
         'bootstrap': [True, False],
-        'n_estimators': [100,110],
+        'n_estimators': [100],
         'random_state': [42]
     }
-    # Random_forests_best_params = {'bootstrap': False, 'max_depth': None, 'max_features': 'sqrt', 'min_samples_leaf': 1, 'min_samples_split': 2, 'n_estimators': 80, 'random_state': 42}
+    # Params_Random_Forest_tfidf = {'bootstrap': False, 'max_depth': None, 'max_features': 'sqrt', 'min_samples_leaf': 1, 'min_samples_split': 3, 'n_estimators': 100, 'random_state': 42}
+    # Params_Random_Forest_Vec = {'bootstrap': False, 'max_depth': None, 'max_features': 'sqrt', 'min_samples_leaf': 1, 'min_samples_split': 2, 'n_estimators': 100, 'random_state': 42}
 
     RandomForestclf_tfidf, RandomForestsBestParams_tfidf = Models_tfidf.Random_Forest(param_grid_random_forest)
     RandomForestclf_vec, RandomForestsBestParams_vec = Models_vec.Random_Forest(param_grid_random_forest)
