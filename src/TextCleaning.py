@@ -5,9 +5,6 @@ import spacy
 import codecs
 import unidecode
 import re
-import nltk
-nltk.download('vader_lexicon')
-from nltk.sentiment.vader import SentimentIntensityAnalyzer
 
 
 contraction_mapping = {"ain't": "is not", "aren't": "are not","can't": "cannot", 
@@ -58,14 +55,13 @@ class TextFormating(object):
     '''
     
     '''
-    def __init__(self, X, Sentiment = True):
+    def __init__(self, X):
         self.X = X
-        self.nlp = spacy.load('en_core_web_sm')
-        self.sentiment = SentimentIntensityAnalyzer()
-        self.Sentiment = Sentiment
+        self.nlp = spacy.load('en_core_web_lg')
 
     def __call__(self):
-        return [self._spacy_cleaner(i) for i in self.X]
+        cleaned = self._spacy_cleaner(self.X)
+        return self.WordVect(cleaned)
 
     def _spacy_cleaner(self,Doc):
         try:
@@ -88,8 +84,9 @@ class TextFormating(object):
                         final_tokens.append(sc_removed)
         joined = ' '.join(final_tokens)
         spell_corrected = re.sub(r'(.)\1+', r'\1\1', joined)
-        if self.Sentiment:
-            score = self.sentiment.polarity_scores(spell_corrected)
-            return [score['neg'], score['neu'], score['pos'], score['compound']]
-        else:
-            return spell_corrected
+        return spell_corrected
+    
+    def WordVect(self,X):
+        doc = self.nlp(X)
+        vect = doc.vector
+        return vect

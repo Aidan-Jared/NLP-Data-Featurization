@@ -24,39 +24,25 @@ class ModelMaker(object):
                 {5:1, 2:10}
             ]
     
-    def Random_Forest(self, param_grid, GridSearch = True, Plot =True):
+    def Random_Forest(self, param_grid, GridSearch = True):
         if GridSearch == True:
             
             RandomForestReg = RandomForestRegressor()
             search = self.Grid_Search(RandomForestReg, param_grid)
-            # if Plot == True:
-            #     self.plot_results(search)
             return search.best_estimator_, search.best_params_
         else:
             RandomForestReg = RandomForestRegressor(param_grid).fit(self.X,self.y)
             return RandomForestReg
 
-    def Grad_Boost(self, param_grid, GridSearch = True, Plot =True):
+    def Grad_Boost(self, param_grid, GridSearch = True):
         if GridSearch == True:
             GradientBoostingReg = GradientBoostingRegressor()
             search = self.Grid_Search(GradientBoostingReg, param_grid)
-            # if Plot == True:
-            #     self.plot_results(search)
             return search.best_estimator_, search.best_params_
         else:
             GradientBoostingReg = GradientBoostingRegressor(param_grid).fit(self.X,self.y,sample_weight=self.weights)
             return GradientBoostingReg
 
-    # def Naive_Bayes(self, param_grid, GridSearch = True, Plot =True):
-    #     if GridSearch == True:
-    #         MultinomialNBclf = MultinomialNB()
-    #         search = self.Grid_Search(MultinomialNBclf, param_grid)
-    #         # if Plot == True:
-    #         #     self.plot_results(search)
-    #         return search.best_estimator_, search.best_params_
-    #     else:
-    #         MultinomialNBclf = MultinomialNB(param_grid).fit(self.X,self.y)
-    #         return MultinomialNBclf
 
     def MLPNN(self, X_test, y_test, epoch = 200, batch_size = 40, valaidation_split= .1):
         model = self.build_MLPNN()
@@ -114,34 +100,3 @@ class ModelMaker(object):
                             scoring='neg_mean_squared_error')
         search.fit(self.X, self.y)
         return search
-
-    # def plot_results(self, model, param = 'n_estimators', name = 'Num Trees'):
-    #     param_name = 'param_%s' % param
-
-    #     # Extract information from the cross validation model
-    #     train_scores = model.cv_results_['mean_train_score']
-    #     test_scores = model.cv_results_['mean_test_score']
-    #     train_time = model.cv_results_['mean_fit_time']
-    #     param_values = list(model.cv_results_[param_name])
-        
-    #     # Plot the scores over the parameter
-    #     plt.subplots(1, 2, figsize=(10, 6))
-    #     plt.subplot(121)
-    #     plt.plot(param_values, train_scores, 'bo-', label = 'train')
-    #     plt.plot(param_values, test_scores, 'go-', label = 'test')
-    #     plt.ylim(ymin = -10, ymax = 0)
-    #     plt.legend()
-    #     plt.xlabel(name)
-    #     plt.ylabel('Neg Mean Absolute Error')
-    #     plt.title('Score vs %s' % name)
-        
-    #     plt.subplot(122)
-    #     plt.plot(param_values, train_time, 'ro-')
-    #     plt.ylim(ymin = 0.0, ymax = 2.0)
-    #     plt.xlabel(name)
-    #     plt.ylabel('Train Time (sec)')
-    #     plt.title('Training Time vs %s' % name)
-        
-        
-    #     plt.tight_layout(pad = 4)
-    #     plt.show()
