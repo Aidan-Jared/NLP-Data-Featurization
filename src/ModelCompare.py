@@ -90,21 +90,22 @@ if __name__ == "__main__":
     y, corpus = Get_Corpus('data/Amz_book_review_short.parquet', plot=True)
     word_vec = Get_Corpus('data/Amz_book_review_short_vector.parquet', get_y=False, is_WordVec=True)
     
+    X_train_tfidf, X_test_tfidf, y_train_tfidf, y_test_tfidf = train_test_split(corpus, y, test_size=0.5, random_state=42, stratify=y)
+    X_train_vec, X_test_vec, y_train_vec, y_test_vec = train_test_split(word_vec, y, test_size=0.5, random_state=42, stratify=y)
+    
     text_vect = Pipeline([
                         ('vect', CountVectorizer(max_features=5000, max_df=.85, min_df=2)),
                         ('tfidf', TfidfTransformer())
     ])
 
-    corpus = text_vect.fit_transform(corpus)
+    X_train_tfidf = text_vect.fit_transform(X_train_tfidf).todense()
+    X_test_tfidf = text_vect.transform(X_test_tfidf)
     pca = PCA(n_components=300)
-    theta = pca.fit_transform(corpus.todense())
+    theta = pca.fit_transform(X_train_tfidf)
     
     fig, ax = plt.subplots(figsize=(8,6))
     scree_plot(ax, pca, title='Test1', n_components_to_plot=20)
     plt.show()
-
-    X_train_tfidf, X_test_tfidf, y_train_tfidf, y_test_tfidf = train_test_split(theta, y, test_size=0.2, random_state=42, stratify=y)
-    X_train_vec, X_test_vec, y_train_vec, y_test_vec = train_test_split(word_vec, y, test_size=0.2, random_state=42, stratify=y)
 
     X_smt_tfidf, y_smt_tfidf = Smote(X_train_tfidf, y_train_tfidf)
     X_smt_vec, y_smt_vec = Smote(X_train_vec, y_train_vec)
@@ -186,5 +187,5 @@ if __name__ == "__main__":
     # comparing the models
     modelScores = {'Data Featurization Type': ['Doc2Vec', 'TFIDF'], 'Mean Squared Error' : [RandomForestMSE_vec, RandomForestMSE_tfidf]}
     df_acc = pd.DataFrame.from_dict(modelScores)
-    df_acc.plot(kind='bar', x='Data Featurization Type', rot=0)
+    df_acc.plot(kind='bar', x='Data Featurization Type', rot=0, legend=False)
     plt.savefig('images/Model_MSE.png')

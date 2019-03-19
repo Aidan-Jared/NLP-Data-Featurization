@@ -17,12 +17,6 @@ class ModelMaker(object):
     def __init__(self, X, y):
         self.X = X
         self.y = y
-        self.weights = [
-                {5:1, 4:10},
-                {5:1, 3:10},
-                {5:1, 1:10},
-                {5:1, 2:10}
-            ]
     
     def Random_Forest(self, param_grid, GridSearch = True):
         if GridSearch == True:
@@ -40,7 +34,7 @@ class ModelMaker(object):
             search = self.Grid_Search(GradientBoostingReg, param_grid)
             return search.best_estimator_, search.best_params_
         else:
-            GradientBoostingReg = GradientBoostingRegressor(param_grid).fit(self.X,self.y,sample_weight=self.weights)
+            GradientBoostingReg = GradientBoostingRegressor(param_grid).fit(self.X,self.y)
             return GradientBoostingReg
 
 
@@ -48,8 +42,7 @@ class ModelMaker(object):
         model = self.build_MLPNN()
         tensorboard = TensorBoard(log_dir='./logs', histogram_freq=2, batch_size=40, write_graph=True, write_grads=True, write_images=True)
         earlystop = EarlyStopping(monitor='loss', min_delta=1e-5,patience=30, verbose=0,mode='auto')
-        model.fit(self.X, self.y, epochs=epoch, batch_size=batch_size, verbose=1, validation_split=valaidation_split, callbacks=[tensorboard, earlystop]) #
-        self.print_output(model, X_test, y_test, 42)
+        model.fit(self.X, self.y, epochs=epoch, batch_size=batch_size, verbose=1, validation_split=valaidation_split, callbacks=[tensorboard, earlystop])
         y_test_pred = model.predict(X_test, verbose=0)
         return model, y_test_pred.T[0]
     
@@ -80,19 +73,6 @@ class ModelMaker(object):
         model.compile(loss='mean_squared_error', optimizer=ada)
         return model
 
-    def print_output(self, model, X_test, y_test, rng_seed):
-        '''prints model accuracy results'''
-        y_train_pred = model.predict(self.X, verbose=0)
-        y_test_pred = model.predict(X_test, verbose=0)
-        y_test_pred = y_test_pred.T[0]
-        print('\nRandom number generator seed: {}'.format(rng_seed))
-        print('\nFirst 30 labels:      {}'.format(y_test[:30]))
-        print('First 30 predictions: {}'.format(y_test_pred[:30]))
-        train_MSE = mean_squared_error(self.y, y_train_pred)
-        print('\nTraining MSE: %.2f' % (train_MSE))
-        test_MSE = mean_squared_error(y_test, y_test_pred)
-        print('Test MSE: %.2f' % (test_MSE))
-    
     def Grid_Search(self, model, param_grid):
         search = GridSearchCV(model, 
                             param_grid,
