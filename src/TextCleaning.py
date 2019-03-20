@@ -55,9 +55,9 @@ class TextFormating(object):
     '''
     
     '''
-    def __init__(self, X):
+    def __init__(self, X, nlp):
         self.X = X
-        self.nlp = spacy.load('en_core_web_lg')
+        self.nlp = nlp
 
     def __call__(self):
         cleaned = [self._spacy_cleaner(i) for i in self.X]

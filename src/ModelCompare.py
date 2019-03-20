@@ -6,13 +6,14 @@ from ModelMaker import ModelMaker
 from sklearn.feature_extraction.text import TfidfTransformer, CountVectorizer
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.decomposition import PCA
-from sklearn.metrics import mean_squared_error
+from sklearn.metrics import mean_squared_error, pairwise_distances
 from sklearn.pipeline import Pipeline
 from TextCleaning import TextFormating
 from Doc2Vect import Doc2Vect
 from imblearn.over_sampling import SMOTE
-import timeit
+from timeit import default_timer as timer
 import spacy
+plt.style.use('ggplot')
 
 def Get_Corpus(fileName, get_y = True, is_WordVec = False, plot = False):
   df = pq.read_table(fileName).to_pandas()
@@ -78,27 +79,57 @@ def Smote(X, y, random_state = 42, k_neighbors=3, plot = False):
         plt.savefig('images/SMOTE_class_distributions.png')
       return X_smt, y_smt
 
+def Doc_Simularity(corpus, vector, index, n_simular = 1):
+    cosine = pairwise_distances(vector, metric='cosine')[index]
+    indexes_most = cosine.argsort()[:-n_simular-1:-1]
+    indexes_least = cosine.argsort()[:n_simular+1]
+    return corpus[indexes_most], corpus[indexes_least]
+
 def ModelSplitting(X, y, test_size):
     X_train, X_test, y_train, y_test = train_test_split(X,y, test_size=test_size, random_state=5, stratify=y)
     return X_train, X_test, y_train, y_test
 
 def ModelEvaluation(model, params, X_test, y_test):
-    Bestmodel, BestParams = model.Random_Forest(params)
+    start_build_model = timer()
+    Bestmodel, BestParams = model.Random_Forest(params, GridSearch=False)
+    end_build_model = timer()
 
+    start_preidct = timer()
     y_pred = Bestmodel.predict(X_test)
+    y_pred = np.round(y_pred)
+    end_preidct = timer()
+
+    build_time = end_build_model - start_build_model
+    predict_time = end_preidct - start_preidct
 
     modelMSE = mean_squared_error(y_test, y_pred)
-    return Bestmodel, BestParams, y_pred, modelMSE
+    return Bestmodel, BestParams, y_pred, modelMSE, build_time, predict_time
+
+def bar_plot(Dict, y_label, title, save_file, legend=False):
+    df = pd.DataFrame.from_dict(Dict)
+    ax = df.plot(kind='bar', x='Data Featurization Type', rot=0, legend=legend)
+    ax.set_ylabel(y_label)
+    ax.set_title(title)
+    for i in ax.patches:
+      ax.annotate(str(i.get_height())[:5], (i.get_x(), i.get_height() * 1.01))
+    plt.savefig(save_file)
 
 if __name__ == "__main__":
     y, corpus = Get_Corpus('data/Amz_book_review_short.parquet', plot=False)
     word_vec = Get_Corpus('data/Amz_book_review_short_vector.parquet', get_y=False, is_WordVec=True)
     
-    corpus_big, corpus_short, y_big, y_short = ModelSplitting(corpus, y, .25)
-    word_vec, word_vec_short, y_big, y_short = ModelSplitting(word_vec, y, .25)
-    X_train_tfidf, X_test_tfidf, y_train_tfidf, y_test_tfidf = train_test_split(corpus_short, y_short, test_size=.2, random_state=42, stratify=y_short)
-    X_train_vec_spacy, X_test_vec_spacy, y_train_vec_spacy, y_test_vec_spacy = train_test_split(word_vec_short, y_short, test_size=.2, random_state=42, stratify=y_short)
+    # corpus_big, corpus_short, y_big, y_short = ModelSplitting(corpus, y, .25)
+    # word_vec, word_vec_short, y_big, y_short = ModelSplitting(word_vec, y, .25)
+    X_train_tfidf, X_test_tfidf, y_train_tfidf, y_test_tfidf = train_test_split(corpus, y, test_size=.2, random_state=42, stratify=y)
+    X_train_vec_spacy, X_test_vec_spacy, y_train_vec_spacy, y_test_vec_spacy = train_test_split(word_vec, y, test_size=.2, random_state=42, stratify=y)
     X_train_vec_gensim, X_test_vec_gensim = Doc2Vect(X_train_tfidf, X_test_tfidf)()
+    
+    # for index in range(10):
+    #   most_simular, least_simular = Doc_Simularity(corpus_short, word_vec_short, index)
+    #   with open('DocVec.txt', 'w') as f:
+    #     f.write(corpus_short[index])
+    #     f.write('\n'.join(most_simular))
+    #     f.write('\n'.join(least_simular))
     
     text_vect = Pipeline([
                         ('vect', CountVectorizer(max_features=5000, max_df=.85, min_df=2)),
@@ -122,76 +153,30 @@ if __name__ == "__main__":
     Models_vec_spacy = ModelMaker(X_smt_vec_spacy, y_smt_vec_spacy)
     Models_vec_gensim = ModelMaker(X_smt_vec_gensim, y_smt_vec_gensim)
 
-    param_grid_random_forest = {
-        'max_depth': [None,3],
-        'max_features' : ['sqrt', 'log2'],
-        'min_samples_split': [2,3,4],
-        'min_samples_leaf': [1,2],
-        'bootstrap': [True, False],
-        'n_estimators': [80,90,100],
-        'random_state': [42]
-    }
-    # Params_Random_Forest_tfidf = {'bootstrap': False, 'max_depth': None, 'max_features': 'sqrt', 'min_samples_leaf': 1, 'min_samples_split': 3, 'n_estimators': 100, 'random_state': 42}
-    # Params_Random_Forest_Vec = {'bootstrap': False, 'max_depth': None, 'max_features': 'sqrt', 'min_samples_leaf': 1, 'min_samples_split': 2, 'n_estimators': 100, 'random_state': 42}
+    # param_grid_random_forest = {
+    #     'max_depth': [None,3],
+    #     'max_features' : ['sqrt', 'log2'],
+    #     'min_samples_split': [2,3,4],
+    #     'min_samples_leaf': [1,2],
+    #     'bootstrap': [True, False],
+    #     'n_estimators': [80,90,100],
+    #     'random_state': [42]
+    # }
+    Params_Random_Forest_tfidf =   {'bootstrap': False, 'max_depth': None, 'max_features': 'sqrt', 'min_samples_leaf': 1, 'min_samples_split': 3, 'n_estimators': 80, 'random_state': 42}
+    Params_Random_Forest_Spacy_Vec =   {'bootstrap': False, 'max_depth': None, 'max_features': 'sqrt', 'min_samples_leaf': 1, 'min_samples_split': 2, 'n_estimators': 90, 'random_state': 42}
+    Params_Random_Forest_Gensim_Vec =  {'bootstrap': False, 'max_depth': None, 'max_features': 'sqrt', 'min_samples_leaf': 1, 'min_samples_split': 3, 'n_estimators': 80, 'random_state': 42}
 
-    RandomForestclf_tfidf, RandomForestsBestParams_tfidf, y_pred_random_forest_tfidf, RandomForestMSE_tfidf = ModelEvaluation(Models_tfidf, param_grid_random_forest, X_test_tfidf, y_test_tfidf)
-    RandomForestclf_vec_spacy, RandomForestsBestParams_vec_spacy, y_pred_random_forest_vec_spacy, RandomForestMSE_vec_spacy = ModelEvaluation(Models_vec_spacy, param_grid_random_forest, X_test_vec_spacy, y_test_vec_spacy)
-    RandomForestclf_vec_gensim, RandomForestsBestParams_vec_gensim, y_pred_random_forest_vec_gensim, RandomForestMSE_vec_gensim = ModelEvaluation(Models_vec_gensim, param_grid_random_forest, X_test_vec_gensim, y_test_tfidf)
+    RandomForestclf_tfidf, RandomForestsBestParams_tfidf, y_pred_random_forest_tfidf, RandomForestMSE_tfidf, tfidf_build_time, tfidf_predict_time = ModelEvaluation(Models_tfidf, Params_Random_Forest_tfidf, X_test_tfidf, y_test_tfidf)
+    RandomForestclf_vec_spacy, RandomForestsBestParams_vec_spacy, y_pred_random_forest_vec_spacy, RandomForestMSE_vec_spacy, spacy_build_time, spacy_predict_time = ModelEvaluation(Models_vec_spacy, Params_Random_Forest_Spacy_Vec, X_test_vec_spacy, y_test_vec_spacy)
+    RandomForestclf_vec_gensim, RandomForestsBestParams_vec_gensim, y_pred_random_forest_vec_gensim, RandomForestMSE_vec_gensim, gensim_build_time, gensim_predict_time = ModelEvaluation(Models_vec_gensim, Params_Random_Forest_Gensim_Vec, X_test_vec_gensim, y_test_tfidf)
 
     print('Params for Random Forest tfidf: ', RandomForestsBestParams_tfidf)
     print('Params for Random Forest Spacy Vec: ', RandomForestsBestParams_vec_spacy)
     print('Params for Random Forest Gensim Vec: ', RandomForestsBestParams_vec_gensim)
 
-    # #Gradient Boosting
-    # param_grid_grad_boost = {
-    #     'max_depth': [3,4, None],
-    #     'subsample': [1,.5],
-    #     'max_features' : ['sqrt', 'log2', None],
-    #     'min_samples_split': [3,4],
-    #     'min_samples_leaf': [5,10],
-    #     'n_estimators': [20,30],
-    #     'random_state': [42]
-    # }
-    # # Grad_boost_best_params = {'max_depth': None, 'max_features': None, 'min_samples_leaf': 10, 'min_samples_split': 4, 'n_estimators': 20, 'random_state': 42, 'subsample': 1}
-
-    # GradientBoostclf_sent, GradientBoostBestParams_sent = Models_sent.Grad_Boost(param_grid_grad_boost, Plot=False)
-    # # GradientBoostclf_vect, GradientBoostBestParams_vect = Models_vect.Grad_Boost(param_grid_grad_boost, Plot=False)
-    # # GradientBoostclf_theta, GradientBoostBestParams_theta = Models_theta.Grad_Boost(param_grid_grad_boost, Plot=False)
-    # print('Params for Gradient Boost Sent: ', GradientBoostBestParams_sent)
-    # # print('Params for Gradient Boost Vect: ', GradientBoostBestParams_vect)
-    # # print('Params for Gradient Boost Theta: ', GradientBoostBestParams_theta)
-    # y_pred_grad_boost_sent = GradientBoostclf_sent.predict(X_test_sent)
-    # y_pred_grad_boost_sent = np.round_(y_pred_grad_boost_sent, 0)
-    # # y_pred_grad_boost_vect = GradientBoostclf_vect.predict(X_test_vect)
-    # # y_pred_grad_boost_theta = GradientBoostclf_vect.predict(X_test_theta)
-    # GradientBoostMSE_sent = mean_squared_error(y_test_sent, y_pred_grad_boost_sent)
-    # # GradientBoostMSE_vect = mean_squared_error(y_test_vect, y_pred_grad_boost_vect)
-    # # GradientBoostMSE_theta = mean_squared_error(y_test_theta, y_pred_grad_boost_theta)
-
-    # # # Multinomial Naive Bayes
-    # # param_grid_Multinomial = {
-    # #     'alpha': [.1,.25,.5,.75,1] ,
-    # #     'fit_prior': [True, False]
-    # # }
-    # # # NB_best_params = {'alpha': .1, 'fit_prior': True}
-
-    # # MultinomialNBclf, MultinomialNBBestParams = Models.Naive_Bayes(param_grid_Multinomial, Plot=False)
-    # # print(MultinomialNBBestParams)
-    # # y_pred_MNB = MultinomialNBclf.predict(X_test)
-    # # MultinomialNBMSE = mean_squared_error(y_test, y_pred_MNB)
-    # # print(MultinomialNBMSE) # .65875
-
-    # # MLPNN
-    # MLP_model_sent, y_pred_MLPNN_sent = Models_sent.MLPNN(X_test_sent, y_test_sent, epoch= 1000, batch_size=10, valaidation_split=.1)
-    # # MLP_model_vect, y_pred_MLPNN_vect = Models_vect.MLPNN(X_test_vect, y_test_vect, epoch= 1000, batch_size=10, valaidation_split=.1)
-    # # MLP_model_theta, y_pred_MLPNN_theta = Models_theta.MLPNN(X_test_theta, y_test_theta, epoch= 1000, batch_size=10, valaidation_split=.1)
-    # y_pred_MLPNN_sent = np.round_(y_pred_MLPNN_sent, 0)
-    # MLPNNMSE_sent = mean_squared_error(y_test_sent, y_pred_MLPNN_sent)
-    # # MLPNNMSE_vect = mean_squared_error(y_test_vect, y_pred_MLPNN_vect)
-    # # MLPNNMSE_theta = mean_squared_error(y_test_theta, y_pred_MLPNN_theta)
-
     # comparing the models
     modelScores = {'Data Featurization Type': ['Gensim Doc2Vec','Spacy Doc2Vec', 'TFIDF'], 'Mean Squared Error' : [RandomForestMSE_vec_gensim, RandomForestMSE_vec_spacy, RandomForestMSE_tfidf]}
-    df_acc = pd.DataFrame.from_dict(modelScores)
-    df_acc.plot(kind='bar', x='Data Featurization Type', rot=0, legend=False)
-    plt.savefig('images/Model_MSE.png')
+    modelTime = {'Data Featurization Type': ['Gensim Doc2Vec','Spacy Doc2Vec', 'TFIDF'], 'Time To Build Model' : [gensim_build_time, spacy_build_time, tfidf_build_time], 'Time to Predict' : [gensim_predict_time, spacy_predict_time, tfidf_predict_time]}
+
+    bar_plot(modelScores, 'Mean Squared Error', 'MSE for Data Featurization', 'images/Model_MSE.png')
+    bar_plot(modelTime, 'Time (Seconds_', 'Model Time for Data Featurization', 'images/Model_Time.png')

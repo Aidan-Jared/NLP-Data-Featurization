@@ -25,8 +25,14 @@ class ModelMaker(object):
             search = self.Grid_Search(RandomForestReg, param_grid)
             return search.best_estimator_, search.best_params_
         else:
-            RandomForestReg = RandomForestRegressor(param_grid).fit(self.X,self.y)
-            return RandomForestReg
+            bootstrap = param_grid['bootstrap']
+            max_features = param_grid['max_features']
+            max_depth = param_grid['max_depth']
+            min_samples_leaf = param_grid['min_samples_leaf']
+            min_samples_split = param_grid['min_samples_split']
+            n_estimators = param_grid['n_estimators']
+            RandomForestReg = RandomForestRegressor(n_estimators=n_estimators, bootstrap=bootstrap, max_depth=max_depth, max_features=max_features, min_samples_split=min_samples_split, min_samples_leaf=min_samples_leaf, random_state=42).fit(self.X,self.y)
+            return RandomForestReg, param_grid
 
     def Grad_Boost(self, param_grid, GridSearch = True):
         if GridSearch == True:
@@ -36,7 +42,6 @@ class ModelMaker(object):
         else:
             GradientBoostingReg = GradientBoostingRegressor(param_grid).fit(self.X,self.y)
             return GradientBoostingReg
-
 
     def MLPNN(self, X_test, y_test, epoch = 200, batch_size = 40, valaidation_split= .1):
         model = self.build_MLPNN()
