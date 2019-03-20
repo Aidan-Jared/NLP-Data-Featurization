@@ -82,6 +82,14 @@ def ModelSplitting(X, y, test_size):
     X_train, X_test, y_train, y_test = train_test_split(X,y, test_size=test_size, random_state=5, stratify=y)
     return X_train, X_test, y_train, y_test
 
+def ModelEvaluation(model, params, X_test, y_test):
+    Bestmodel, BestParams = model.Random_Forest(params)
+
+    y_pred = Bestmodel.predict(X_test)
+
+    modelMSE = mean_squared_error(y_test, y_pred)
+    return Bestmodel, BestParams, y_pred, modelMSE
+
 if __name__ == "__main__":
     y, corpus = Get_Corpus('data/Amz_book_review_short.parquet', plot=False)
     word_vec = Get_Corpus('data/Amz_book_review_short_vector.parquet', get_y=False, is_WordVec=True)
@@ -120,27 +128,19 @@ if __name__ == "__main__":
         'min_samples_split': [2,3,4],
         'min_samples_leaf': [1,2],
         'bootstrap': [True, False],
-        'n_estimators': [100],
+        'n_estimators': [80,90,100],
         'random_state': [42]
     }
     # Params_Random_Forest_tfidf = {'bootstrap': False, 'max_depth': None, 'max_features': 'sqrt', 'min_samples_leaf': 1, 'min_samples_split': 3, 'n_estimators': 100, 'random_state': 42}
     # Params_Random_Forest_Vec = {'bootstrap': False, 'max_depth': None, 'max_features': 'sqrt', 'min_samples_leaf': 1, 'min_samples_split': 2, 'n_estimators': 100, 'random_state': 42}
 
-    RandomForestclf_tfidf, RandomForestsBestParams_tfidf = Models_tfidf.Random_Forest(param_grid_random_forest)
-    RandomForestclf_vec_spacy, RandomForestsBestParams_vec_spacy = Models_vec_spacy.Random_Forest(param_grid_random_forest)
-    RandomForestclf_vec_gensim, RandomForestsBestParams_vec_gensim = Models_vec_gensim.Random_Forest(param_grid_random_forest)
+    RandomForestclf_tfidf, RandomForestsBestParams_tfidf, y_pred_random_forest_tfidf, RandomForestMSE_tfidf = ModelEvaluation(Models_tfidf, param_grid_random_forest, X_test_tfidf, y_test_tfidf)
+    RandomForestclf_vec_spacy, RandomForestsBestParams_vec_spacy, y_pred_random_forest_vec_spacy, RandomForestMSE_vec_spacy = ModelEvaluation(Models_vec_spacy, param_grid_random_forest, X_test_vec_spacy, y_test_vec_spacy)
+    RandomForestclf_vec_gensim, RandomForestsBestParams_vec_gensim, y_pred_random_forest_vec_gensim, RandomForestMSE_vec_gensim = ModelEvaluation(Models_vec_gensim, param_grid_random_forest, X_test_vec_gensim, y_test_tfidf)
 
     print('Params for Random Forest tfidf: ', RandomForestsBestParams_tfidf)
     print('Params for Random Forest Spacy Vec: ', RandomForestsBestParams_vec_spacy)
     print('Params for Random Forest Gensim Vec: ', RandomForestsBestParams_vec_gensim)
-
-    y_pred_random_forest_tfidf = RandomForestclf_tfidf.predict(X_test_tfidf)
-    y_pred_random_forest_vec_spacy = RandomForestclf_vec_spacy.predict(X_test_vec_spacy)
-    y_pred_random_forest_vec_gensim = RandomForestclf_vec_gensim.predict(X_test_vec_gensim)
-
-    RandomForestMSE_tfidf = mean_squared_error(y_test_tfidf, y_pred_random_forest_tfidf)
-    RandomForestMSE_vec_spacy = mean_squared_error(y_test_vec_spacy, y_pred_random_forest_vec_spacy)
-    RandomForestMSE_vec_gensim = mean_squared_error(y_test_tfidf, y_pred_random_forest_vec_gensim)
 
     # #Gradient Boosting
     # param_grid_grad_boost = {
