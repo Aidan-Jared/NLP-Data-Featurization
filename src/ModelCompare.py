@@ -5,13 +5,11 @@ import pyarrow.parquet as pq
 from ModelMaker import ModelMaker
 from sklearn.feature_extraction.text import TfidfTransformer, CountVectorizer
 from sklearn.model_selection import train_test_split, GridSearchCV
-from sklearn.decomposition import LatentDirichletAllocation, NMF, PCA
-from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import pairwise_distances, mean_squared_error
+from sklearn.decomposition import PCA
+from sklearn.metrics import mean_squared_error
 from sklearn.pipeline import Pipeline
-from wordcloud import WordCloud
 from TextCleaning import TextFormating
-from imblearn.pipeline import make_pipeline
+from Doc2Vect import Doc2Vect
 from imblearn.over_sampling import SMOTE
 import timeit
 import spacy
@@ -91,7 +89,8 @@ if __name__ == "__main__":
     corpus_big, corpus_short, y_big, y_short = ModelSplitting(corpus, y, .25)
     word_vec, word_vec_short, y_big, y_short = ModelSplitting(word_vec, y, .25)
     X_train_tfidf, X_test_tfidf, y_train_tfidf, y_test_tfidf = train_test_split(corpus_short, y_short, test_size=.2, random_state=42, stratify=y_short)
-    X_train_vec, X_test_vec, y_train_vec, y_test_vec = train_test_split(word_vec_short, y_short, test_size=.2, random_state=42, stratify=y_short)
+    X_train_vec_spacy, X_test_vec_spacy, y_train_vec_spacy, y_test_vec_spacy = train_test_split(word_vec_short, y_short, test_size=.2, random_state=42, stratify=y_short)
+    X_train_vec_gensim, X_test_vec_gensim = Doc2Vect(X_train_tfidf, X_test_tfidf)()
     
     text_vect = Pipeline([
                         ('vect', CountVectorizer(max_features=5000, max_df=.85, min_df=2)),
@@ -108,10 +107,12 @@ if __name__ == "__main__":
     # plt.savefig('images/Screeplot.png')
 
     X_smt_tfidf, y_smt_tfidf = Smote(X_train_tfidf, y_train_tfidf)
-    X_smt_vec, y_smt_vec = Smote(X_train_vec, y_train_vec)
+    X_smt_vec_spacy, y_smt_vec_spacy = Smote(X_train_vec_spacy, y_train_vec_spacy)
+    X_smt_vec_gensim, y_smt_vec_gensim = Smote(X_train_vec_gensim, y_train_tfidf)
 
     Models_tfidf = ModelMaker(X_smt_tfidf, y_smt_tfidf)
-    Models_vec = ModelMaker(X_smt_vec, y_smt_vec)
+    Models_vec_spacy = ModelMaker(X_smt_vec_spacy, y_smt_vec_spacy)
+    Models_vec_gensim = ModelMaker(X_smt_vec_gensim, y_smt_vec_gensim)
 
     param_grid_random_forest = {
         'max_depth': [None,3],
@@ -126,16 +127,20 @@ if __name__ == "__main__":
     # Params_Random_Forest_Vec = {'bootstrap': False, 'max_depth': None, 'max_features': 'sqrt', 'min_samples_leaf': 1, 'min_samples_split': 2, 'n_estimators': 100, 'random_state': 42}
 
     RandomForestclf_tfidf, RandomForestsBestParams_tfidf = Models_tfidf.Random_Forest(param_grid_random_forest)
-    RandomForestclf_vec, RandomForestsBestParams_vec = Models_vec.Random_Forest(param_grid_random_forest)
+    RandomForestclf_vec_spacy, RandomForestsBestParams_vec_spacy = Models_vec_spacy.Random_Forest(param_grid_random_forest)
+    RandomForestclf_vec_gensim, RandomForestsBestParams_vec_gensim = Models_vec_gensim.Random_Forest(param_grid_random_forest)
 
     print('Params for Random Forest tfidf: ', RandomForestsBestParams_tfidf)
-    print('Params for Random Forest Vec: ', RandomForestsBestParams_vec)
+    print('Params for Random Forest Spacy Vec: ', RandomForestsBestParams_vec_spacy)
+    print('Params for Random Forest Gensim Vec: ', RandomForestsBestParams_vec_gensim)
 
     y_pred_random_forest_tfidf = RandomForestclf_tfidf.predict(X_test_tfidf)
-    y_pred_random_forest_vec = RandomForestclf_vec.predict(X_test_vec)
+    y_pred_random_forest_vec_spacy = RandomForestclf_vec_spacy.predict(X_test_vec_spacy)
+    y_pred_random_forest_vec_gensim = RandomForestclf_vec_gensim.predict(X_test_vec_gensim)
 
     RandomForestMSE_tfidf = mean_squared_error(y_test_tfidf, y_pred_random_forest_tfidf)
-    RandomForestMSE_vec = mean_squared_error(y_test_vec, y_pred_random_forest_vec)
+    RandomForestMSE_vec_spacy = mean_squared_error(y_test_vec_spacy, y_pred_random_forest_vec_spacy)
+    RandomForestMSE_vec_gensim = mean_squared_error(y_test_tfidf, y_pred_random_forest_vec_gensim)
 
     # #Gradient Boosting
     # param_grid_grad_boost = {
@@ -186,7 +191,7 @@ if __name__ == "__main__":
     # # MLPNNMSE_theta = mean_squared_error(y_test_theta, y_pred_MLPNN_theta)
 
     # comparing the models
-    modelScores = {'Data Featurization Type': ['Doc2Vec', 'TFIDF'], 'Mean Squared Error' : [RandomForestMSE_vec, RandomForestMSE_tfidf]}
+    modelScores = {'Data Featurization Type': ['Gensim Doc2Vec','Spacy Doc2Vec', 'TFIDF'], 'Mean Squared Error' : [RandomForestMSE_vec_gensim, RandomForestMSE_vec_spacy, RandomForestMSE_tfidf]}
     df_acc = pd.DataFrame.from_dict(modelScores)
     df_acc.plot(kind='bar', x='Data Featurization Type', rot=0, legend=False)
     plt.savefig('images/Model_MSE.png')

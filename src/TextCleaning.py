@@ -60,8 +60,9 @@ class TextFormating(object):
         self.nlp = spacy.load('en_core_web_lg')
 
     def __call__(self):
-        cleaned = self._spacy_cleaner(self.X)
-        return self.WordVect(cleaned)
+        cleaned = [self._spacy_cleaner(i) for i in self.X]
+        return np.asarray(cleaned)
+        #return self.WordVect(cleaned)
 
     def _spacy_cleaner(self,Doc):
         try:
