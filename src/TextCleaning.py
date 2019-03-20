@@ -5,6 +5,7 @@ import spacy
 import codecs
 import unidecode
 import re
+from googletrans import Translator
 
 
 contraction_mapping = {"ain't": "is not", "aren't": "are not","can't": "cannot", 
@@ -58,11 +59,14 @@ class TextFormating(object):
     def __init__(self, X, nlp):
         self.X = X
         self.nlp = nlp
+        self.translator = Translator()
 
-    def __call__(self):
+    def __call__(self, vectorize = False):
         cleaned = [self._spacy_cleaner(i) for i in self.X]
-        return np.asarray(cleaned)
-        #return self.WordVect(cleaned)
+        if not vectorize:
+            return np.asarray(cleaned)
+        else:
+            return self.WordVect(cleaned)
 
     def _spacy_cleaner(self,Doc):
         try:
@@ -71,21 +75,24 @@ class TextFormating(object):
             decoded = unidecode.unidecode(Doc)
         apostrophe_handled = re.sub("’", "'", decoded)
         expanded = ' '.join([contraction_mapping[t] if t in contraction_mapping else t for t in apostrophe_handled.split(" ")])
-        parsed = self.nlp(expanded)
-        final_tokens = []
-        for t in parsed:
-            if t.is_punct or t.is_space or t.like_num or t.like_url or t.is_stop:
-                pass
-            else:
-                if t.lemma_ == '-PRON-':
-                    final_tokens.append(str(t))
+        if self.translator.detect(expanded).lang:
+            parsed = self.nlp(expanded)
+            final_tokens = []
+            for t in parsed:
+                if t.is_punct or t.is_space or t.like_num or t.like_url or t.is_stop:
+                    pass
                 else:
-                    sc_removed = re.sub("[^a-zA-Z]", '', str(t.lemma_))
-                    if len(sc_removed) > 1:
-                        final_tokens.append(sc_removed)
-        joined = ' '.join(final_tokens)
-        spell_corrected = re.sub(r'(.)\1+', r'\1\1', joined)
-        return spell_corrected
+                    if t.lemma_ == '-PRON-':
+                        final_tokens.append(str(t))
+                    else:
+                        sc_removed = re.sub("[^a-zA-Z]", '', str(t.lemma_))
+                        if len(sc_removed) > 1:
+                            final_tokens.append(sc_removed)
+            joined = ' '.join(final_tokens)
+            spell_corrected = re.sub(r'(.)\1+', r'\1\1', joined)
+            return spell_corrected
+        else:
+            pass
     
     def WordVect(self,X):
         doc = self.nlp(X)

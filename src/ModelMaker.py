@@ -31,7 +31,7 @@ class ModelMaker(object):
             min_samples_leaf = param_grid['min_samples_leaf']
             min_samples_split = param_grid['min_samples_split']
             n_estimators = param_grid['n_estimators']
-            RandomForestReg = RandomForestRegressor(n_estimators=n_estimators, bootstrap=bootstrap, max_depth=max_depth, max_features=max_features, min_samples_split=min_samples_split, min_samples_leaf=min_samples_leaf, random_state=42).fit(self.X,self.y)
+            RandomForestReg = RandomForestRegressor(n_estimators=n_estimators, bootstrap=bootstrap, max_depth=max_depth, max_features=max_features, min_samples_split=min_samples_split, min_samples_leaf=min_samples_leaf, random_state=1).fit(self.X,self.y)
             return RandomForestReg, param_grid
 
     def Grad_Boost(self, param_grid, GridSearch = True):

@@ -7,6 +7,7 @@ from sklearn.feature_extraction.text import TfidfTransformer, CountVectorizer
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.decomposition import PCA
 from sklearn.metrics import mean_squared_error, pairwise_distances
+from scipy.spatial.distance import cosine
 from sklearn.pipeline import Pipeline
 from TextCleaning import TextFormating
 from Doc2Vect import Doc2Vect
@@ -81,8 +82,8 @@ def Smote(X, y, random_state = 42, k_neighbors=3, plot = False):
 
 def Doc_Simularity(corpus, vector, index, n_simular = 1):
     cosine = pairwise_distances(vector, metric='cosine')[index]
-    indexes_most = cosine.argsort()[:-n_simular-1:-1]
-    indexes_least = cosine.argsort()[:n_simular+1]
+    indexes_most = cosine.argsort()[:-n_simular-1:-1][0]
+    indexes_least = cosine.argsort()[n_simular+1]
     return corpus[indexes_most], corpus[indexes_least]
 
 def ModelSplitting(X, y, test_size):
@@ -114,6 +115,19 @@ def bar_plot(Dict, y_label, title, save_file, legend=False):
       ax.annotate(str(i.get_height())[:5], (i.get_x(), i.get_height() * 1.01))
     plt.savefig(save_file)
 
+def Document_Save_to_file(filename, corpus, word_vec):
+      for index in np.random.randint(0,len(corpus),5):
+        most_simular, least_simular = Doc_Simularity(corpus, word_vec, index)
+        with open(filename, 'a') as f:
+          f.write("New Doc: ")
+          f.write('\n')
+          f.write(corpus[index])
+          f.write('\n')
+          f.write(most_simular)
+          f.write('\n')
+          f.write(least_simular)
+          f.write('\n')
+
 if __name__ == "__main__":
     y, corpus = Get_Corpus('data/Amz_book_review_short.parquet', plot=False)
     word_vec = Get_Corpus('data/Amz_book_review_short_vector.parquet', get_y=False, is_WordVec=True)
@@ -124,12 +138,8 @@ if __name__ == "__main__":
     X_train_vec_spacy, X_test_vec_spacy, y_train_vec_spacy, y_test_vec_spacy = train_test_split(word_vec, y, test_size=.2, random_state=42, stratify=y)
     X_train_vec_gensim, X_test_vec_gensim = Doc2Vect(X_train_tfidf, X_test_tfidf)()
     
-    # for index in range(10):
-    #   most_simular, least_simular = Doc_Simularity(corpus_short, word_vec_short, index)
-    #   with open('DocVec.txt', 'w') as f:
-    #     f.write(corpus_short[index])
-    #     f.write('\n'.join(most_simular))
-    #     f.write('\n'.join(least_simular))
+    Document_Save_to_file('DocVecspacy.txt', corpus, word_vec)
+    Document_Save_to_file('DocVecgensim.txt', X_train_tfidf, X_train_vec_gensim)
     
     text_vect = Pipeline([
                         ('vect', CountVectorizer(max_features=5000, max_df=.85, min_df=2)),
@@ -138,7 +148,7 @@ if __name__ == "__main__":
 
     X_train_tfidf = text_vect.fit_transform(X_train_tfidf).todense()
     X_test_tfidf = text_vect.transform(X_test_tfidf)
-    pca = PCA(n_components=70)
+    pca = PCA(n_components=100)
     theta = pca.fit_transform(X_train_tfidf)
     
     # fig, ax = plt.subplots(figsize=(8,6))
@@ -179,4 +189,4 @@ if __name__ == "__main__":
     modelTime = {'Data Featurization Type': ['Gensim Doc2Vec','Spacy Doc2Vec', 'TFIDF'], 'Time To Build Model' : [gensim_build_time, spacy_build_time, tfidf_build_time], 'Time to Predict' : [gensim_predict_time, spacy_predict_time, tfidf_predict_time]}
 
     bar_plot(modelScores, 'Mean Squared Error', 'MSE for Data Featurization', 'images/Model_MSE.png')
-    bar_plot(modelTime, 'Time (Seconds_', 'Model Time for Data Featurization', 'images/Model_Time.png')
+    bar_plot(modelTime, 'Time (Seconds)', 'Model Time for Data Featurization', 'images/Model_Time.png', legend=True)
