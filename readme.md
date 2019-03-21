@@ -21,6 +21,7 @@ As you can see the data is very skewed towards high ratings with just about 2/3 
 To fix this probelm I decided on SMOTE the data. In order to do this I train test split the data and ran then applied SMOTE to the training data in order to add more ratings for the less used ratings. This produced the following distribution which I know will produce better models:
 
 ![alt_text](images/SMOTE_class_distributions.png)
+<sub><sub><sub><sub><sub>much better</sub></sub></sub></sub></sub>
 
 ## Data Vectorization
 
@@ -58,7 +59,7 @@ From this scree plot it looks like 100 componets will work best which is a large
 
 ### Doc2Vect
 
-Here I decided to use two different systems, spacy and gensim. Spacy is a strong package for nlp and comes with its own general Doc2Vec model which I used to transform all my documents to vectors of a length of 300. Gensim is a package that includes tools to build your own Doc2Vec model. I personaly decided to set the vector size to be 300, the window to look at the 15 words infront and behind the word, only consider words that apear more than 5 times and to train over 800 epochs (Thanks to [This](http://www.aclweb.org/anthology/W16-1609) paper on Doc2Vec). I used the training set to build this model and then transformed the traning and testing data.
+Here I decided to use two different systems, spacy and gensim. Spacy is a strong package for nlp and comes with its own general Doc2Vec model which I used to transform all my documents to vectors of a length of 300. Gensim is a package that includes tools to build your own Doc2Vec model. I personaly decided to set the vector size to be 300, the window to look at the 15 words infront and behind the word, only consider words that apear more than 1 time and to train over 400 epochs (Thanks to [This](http://www.aclweb.org/anthology/W16-1609) paper on Doc2Vec and optimizing SQS). I used the training set to build this model and then transformed the traning and testing data.
 
 Because you can directly compare vectors here are 5 documents along with the most and least simular documents acording to Spacy:
 
@@ -92,9 +93,13 @@ In order to test the performance of these models I decided to use the Random For
 |Spacy|False|None|sqrt|1|2|90|
 |Gensim|False|None|sqrt|1|3|80|
 
-(parameter Explanation)
+Most of these are the defualt parameters of sklearn which in some cases makes the most sense. Max Depth tells the model the maximum depth to go to and since it is None, each desision tree will expand to pure leaves. Min samples leaf if the minimum amount of samples in each leaf of the trees and this goes hand in hand with Max depth because only having one sample in each leaf should create a pure leaf.
 
-After training the predicting off of these modes I found the following results
+The hyperparameters that are changed from the default do make some amount of sense. because This is a large data set outliers would be much less likely which means bootstrapping is not needed to simulate the population so the full data set can be used to make the model. Min Samples split is the minimum amount of samples needed in a leaf to split and it does make sense that it would default to a smaller number because that helps the leafs split to the minimum samples per leaf. With the Tfidf and Gensim models I think that the min sample split became 3 because two values ended up being very close together and tended to end in the same node producing much better results than if these two samples were to be split apart. And lastly the number of estimators ended just shy of 100 because even though the random forest model each tree purposfully overfits the data, but if you make to many trees you start capturing the noise even though you are selecting the average results of all the trees.
+
+### 2000 Data points
+
+After training the predicting off of these modes I found the following results with a data set of 2000 points:
 
 ![alt_test](images/Model_MSE.png)
 
@@ -104,11 +109,15 @@ As you can see Tfidif had the lowest MSE but it is only slightly different than 
 
 From this you can see that spacy had the fastest build time and its predict time is tied with gensim. As a point of comparison rember that both of the Doc2Vec methods produce vecors of length 300 while tfidf is only 100 items long.
 
+### 20000
+
+To test my theories I then decided to use 20000 data points to see how increasing the amount of data would change the Gensim model and the Tfidf speed.
+
+## Conclusion
+
 If we look at both of these metrics, I would choose to use spacy because it performs only slightly worse than Tfidf but it trains the model the fastest and is tied for predict time. I belive that if the data was scalled up further or no pca being implimented spacy would massivly out perform Tfidf on the time while producing comparable MSE.
 
 With Gensim I think that it is performing the worst because I am building my own model which means that it only has so many data points to train on. Spacy performs well because it is a model that has already been built on a large amount of data while gensim has only been built on less than 2000 points of data. If I increased the size of my data set I belive that gensim would start to out perform spacy and Tfidf when looking at MSE and run in a simular amount of time to both spacy and Tfidf.
-
-## Conclusion
 
 In conclusion, it seems that in smaller datasets Tfidf performs the best but that Doc2Vec will inprove with larger datasets and more traning time.
 

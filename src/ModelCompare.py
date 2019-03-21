@@ -129,8 +129,8 @@ def Document_Save_to_file(filename, corpus, word_vec):
           f.write('\n')
 
 if __name__ == "__main__":
-    y, corpus = Get_Corpus('data/Amz_book_review_short.parquet', plot=False)
-    word_vec = Get_Corpus('data/Amz_book_review_short_vector.parquet', get_y=False, is_WordVec=True)
+    y, corpus = Get_Corpus('data/Amz_book_review_medium.parquet', plot=False)
+    word_vec = Get_Corpus('data/Amz_book_review_medium_vector.parquet', get_y=False, is_WordVec=True)
     
     # corpus_big, corpus_short, y_big, y_short = ModelSplitting(corpus, y, .25)
     # word_vec, word_vec_short, y_big, y_short = ModelSplitting(word_vec, y, .25)
@@ -188,5 +188,5 @@ if __name__ == "__main__":
     modelScores = {'Data Featurization Type': ['Gensim Doc2Vec','Spacy Doc2Vec', 'TFIDF'], 'Mean Squared Error' : [RandomForestMSE_vec_gensim, RandomForestMSE_vec_spacy, RandomForestMSE_tfidf]}
     modelTime = {'Data Featurization Type': ['Gensim Doc2Vec','Spacy Doc2Vec', 'TFIDF'], 'Time To Build Model' : [gensim_build_time, spacy_build_time, tfidf_build_time], 'Time to Predict' : [gensim_predict_time, spacy_predict_time, tfidf_predict_time]}
 
-    bar_plot(modelScores, 'Mean Squared Error', 'MSE for Data Featurization', 'images/Model_MSE.png')
-    bar_plot(modelTime, 'Time (Seconds)', 'Model Time for Data Featurization', 'images/Model_Time.png', legend=True)
+    bar_plot(modelScores, 'Mean Squared Error', 'MSE for Data Featurization', 'images/Model_MSE_medium.png')
+    bar_plot(modelTime, 'Time (Seconds)', 'Model Time for Data Featurization', 'images/Model_Time_medium.png', legend=True)

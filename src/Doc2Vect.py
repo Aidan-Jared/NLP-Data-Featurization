@@ -24,7 +24,7 @@ class Doc2Vect(object):
         doc_vec_test = np.vstack(doc_vec_test)
         return doc_vec_train, doc_vec_test
     def _make_model(self, embedding_size = 300):
-        model = Doc2Vec(self.documents, vector_size=embedding_size, window=15, min_count=5,epochs=800, seed=42)
+        model = Doc2Vec(self.documents, vector_size=embedding_size, window=15, min_count=1,epochs=400, seed=42)
         model.delete_temporary_training_data(keep_doctags_vectors=True, keep_inference=True)
         return model
     
