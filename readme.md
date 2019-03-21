@@ -2,6 +2,24 @@
 
 ![alt_text](images/headImage.png)
 
+
+## Table of Contents
+- [EDA](#eda)
+- [Data Vectorization](#data-vectorization)
+    - [Bag-of-Words](#bag-of-words)
+    - [Doc2Vec](#doc2vec)
+- [Creating the Featurizations](#creating-the-featurizations)
+    - [Bag-of-words](#bag-of-words)
+    - [Doc2Vect](#doc2vect)
+- [Performance](#performance)
+    - [2000 Data points](#2000-data-points)
+    - [20000 Data points](#20000-data-points)
+- [Conclusion](#conclusion)
+- [Future Direction](#future-direction)
+- [Acknowledgments](#acknowledgments)
+
+
+
 For this second capstone I decided to investigate how well the different data featurization methods perform. In order to test this out I decided to use the Amazon reveiw dataset provided by Amazon because the data included many different writen reveiws along side the star reveiws given by each users. This alowed me to work with scalable data and to test how well the methods were performing.
 
 ## EDA
@@ -59,7 +77,7 @@ From this scree plot it looks like 100 componets will work best which is a large
 
 ### Doc2Vect
 
-Here I decided to use two different systems, spacy and gensim. Spacy is a strong package for nlp and comes with its own general Doc2Vec model which I used to transform all my documents to vectors of a length of 300. Gensim is a package that includes tools to build your own Doc2Vec model. I personaly decided to set the vector size to be 300, the window to look at the 15 words infront and behind the word, only consider words that apear more than 1 time and to train over 400 epochs (Thanks to [This](http://www.aclweb.org/anthology/W16-1609) paper on Doc2Vec and optimizing SQS). I used the training set to build this model and then transformed the traning and testing data.
+Here I decided to use two different systems, spacy and gensim. Spacy is a strong package for nlp and comes with its own general Doc2Vec model which I used to transform all my documents to vectors of a length of 300. Gensim is a package that includes tools to build your own Doc2Vec model. I personaly decided to set the vector size to be 300, the window to look at the 15 words infront and behind the word, only consider words that apear more than 1 time and to train over 400 epochs (Thanks to [This](http://www.aclweb.org/anthology/W16-1609) paper on Doc2Vec and optimizing STS). I used the training set to build this model and then transformed the traning and testing data.
 
 Because you can directly compare vectors here are 5 documents along with the most and least simular documents acording to Spacy:
 
@@ -71,7 +89,17 @@ Because you can directly compare vectors here are 5 documents along with the mos
 |Prayer Rain is very inspirational.|Through this book you will experience the TRUE story of the Barrick family.  Their faith in God is truly inspirational.|WaWaWeeWa|
 |I really like the way this book is set up. I feel like it is gonna be a good tool next year in nursing school|I've never been good at keeping a journal, but this has kept me excited and intrigued to see what the next day holds.|Este autor en general lo recomiendo ampliamente. Todos sus cuentos tienen moralejas|
 
-and acording to my gensim:
+Here is what I get from gensim on only 2000 datapoints:
+
+|Original Document|Most Simular|Least Simular|
+|-----------------|------------|-------------|
+|Good info.|Nice book good instructions|I love this s***|
+|We ordered this through the publisher, Scholastic.  Since it was for a six-year old, I was disappointed to find that it wasn't a picture book.  It was a chapter book with one illustration per chapter.    My son, however, wasn't the least put off by the lack of drawings.|Excellent story of the DeMeo gang of Brooklyn. Very powerful accounts of the brutality of "that life". Does a very nice job of giving a look into the other side of the Gambino family|GREAT|
+|Kids enjoyed doodle book.|Excelente libro, te capta, te entretiene, aprendes, te ries,|thank you|
+|The content is accessible and well organized for quick acquisition of knowledge for teaching students, residents and colleagues not to mention for the reader as well.|I was very disappointed in this novel. I was expecting something to the effect of The Red Tent (which I thought was great), since it was compared to it on the inside cover.|GREAT|
+|I'm very pleased with this little Bible. I like that I can easily carry it with me most anywhere. I wanted a SMALL Bible, and this is perfect.|This novel was recommended by my cousins wife who is a preacher.  My son had laid a penny on my mothers heart as we laid her to rest.|GREAT|
+
+and acording to my gensim built on 20000 datapoints:
 
 |Original Document|Most Simular|Least Simular|
 |-----------------|------------|-------------|
@@ -109,7 +137,7 @@ As you can see Tfidif had the lowest MSE but it is only slightly different than 
 
 From this you can see that spacy had the fastest build time and its predict time is tied with gensim. As a point of comparison rember that both of the Doc2Vec methods produce vecors of length 300 while tfidf is only 100 items long.
 
-### 20000
+### 20000 Data points
 
 To test my theories I then decided to use 20000 data points to see how increasing the amount of data would change the Gensim model and the Tfidf speed.
 
@@ -124,3 +152,12 @@ In conclusion, it seems that in smaller datasets Tfidf performs the best but tha
 ## Future Direction
 
 I plan on taking this dataset and the tools that I have learned to start applying Doc2Vec into deep learning in order to build much stronger models on larger data.
+
+## Acknowledgments
+
+- [Taite Sandefer](https://github.com/tsandefer) For helping me understand Doc2Vec and sending me papers and some of her code
+- The Galvanize Instructor team for helping me with code and narrowing my focus
+- [The Paper](http://www.aclweb.org/anthology/W16-1609) by Jey Han Lau and Timothy Baldwin for Evaluation and setting up a Doc2Vec model
+- [The Video](https://www.youtube.com/watch?v=zFScws0mb7M) From Rober Meyer explaning what Doc2vec is and what tools to use
+- [This Article](https://towardsdatascience.com/yet-another-twitter-sentiment-analysis-part-1-tackling-class-imbalance-4d7a7f717d44) by Ricky Kim for an explanation and the code to clean text using spacy
+- Amazon for providing the [data set](https://registry.opendata.aws/amazon-reviews/) for this capstone

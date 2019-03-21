@@ -111,6 +111,7 @@ def bar_plot(Dict, y_label, title, save_file, legend=False):
     ax = df.plot(kind='bar', x='Data Featurization Type', rot=0, legend=legend)
     ax.set_ylabel(y_label)
     ax.set_title(title)
+    ax.get_legend().set_bbox_to_anchor((1,1.2))
     for i in ax.patches:
       ax.annotate(str(i.get_height())[:5], (i.get_x(), i.get_height() * 1.01))
     plt.savefig(save_file)
@@ -150,12 +151,13 @@ if __name__ == "__main__":
     X_test_tfidf = text_vect.transform(X_test_tfidf)
     pca = PCA(n_components=100)
     theta = pca.fit_transform(X_train_tfidf)
+    X_test_tfidf = pca.transform(X_test_tfidf)
     
     # fig, ax = plt.subplots(figsize=(8,6))
     # scree_plot(ax, pca, n_components_to_plot=5000)
     # plt.savefig('images/Screeplot.png')
 
-    X_smt_tfidf, y_smt_tfidf = Smote(X_train_tfidf, y_train_tfidf)
+    X_smt_tfidf, y_smt_tfidf = Smote(theta, y_train_tfidf)
     X_smt_vec_spacy, y_smt_vec_spacy = Smote(X_train_vec_spacy, y_train_vec_spacy)
     X_smt_vec_gensim, y_smt_vec_gensim = Smote(X_train_vec_gensim, y_train_tfidf)
 

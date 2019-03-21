@@ -20,6 +20,6 @@ if __name__ == "__main__":
     for index, i in enumerate(df_debug['review_body']):
         html = markdown(i)
         Text = ' '.join(BeautifulSoup(html).findAll(text=True))
-        corpus = TextFormating(Text, nlp)(vectorize=True)
+        corpus = TextFormating(Text, nlp)(vectorize=False)
         df_final['review_body'].iloc[index] = corpus
-    df_final.to_parquet('data/Amz_book_review_medium_vector.parquet')
+    df_final.to_parquet('data/Amz_book_review_medium.parquet')
