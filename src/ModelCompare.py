@@ -130,9 +130,24 @@ def Document_Save_to_file(filename, corpus, word_vec):
           f.write('least simular: ' + least_simular)
           f.write('\n')
 
+def MultiModelEvaluation():
+      data = []
+      for i in range(20):
+        Xtrainc, Xtestc, ytrainc, ytestc = train_test_split(X_test_tfidf, y_test, test_size=.2)
+        Xtrainv, Xtestv, ytrainv, ytestv = train_test_split(X_vec_test[1], y_test, test_size=.2)
+        Xtraing, Xtestg, ytraing, ytestg = train_test_split(X_test_vec_gensim, y_test, test_size=.2)
+      
+        RandomForestMSE_tfidf = ModelEvaluation(RandomForestclf_tfidf, X_test=Xtestc, y_test= ytestc, build=False)
+        RandomForestMSE_vec_spacy = ModelEvaluation(RandomForestclf_vec_spacy, X_test=Xtestv, y_test= ytestv, build=False)
+        RandomForestMSE_vec_gensim = ModelEvaluation(RandomForestclf_vec_gensim, X_test=Xtestg, y_test= ytestg, build=False)
+
+        modelScores = {'Gensim Doc2Vec' : RandomForestMSE_vec_gensim, 'Spacy Doc2Vec' :RandomForestMSE_vec_spacy, 'TFIDF' : RandomForestMSE_tfidf}
+        data.append(modelScores)
+      return data
+
 if __name__ == "__main__":
-    y, corpus = Get_Corpus('data/Amz_book_review_short.parquet', plot=False)
-    word_vec = Get_Corpus('data/Amz_book_review_short_vector.parquet', get_y=False, is_WordVec=True)
+    y, corpus = Get_Corpus('data/Amz_book_review_medium.parquet', plot=False)
+    word_vec = Get_Corpus('data/Amz_book_review_medium_vector.parquet', get_y=False, is_WordVec=True)
     
     y_test, X_corpus_test = Get_Corpus('data/Amz_book_review_test.parquet', plot = False)
     X_vec_test = Get_Corpus('data/Amz_book_review_test_vector.parquet', plot = False, is_WordVec=True)
@@ -187,21 +202,9 @@ if __name__ == "__main__":
     print('Params for Random Forest Gensim Vec: ', RandomForestsBestParams_vec_gensim)
 
     # comparing the models
-    data = []
-    for i in range(20):
-      Xtrainc, Xtestc, ytrainc, ytestc = train_test_split(X_test_tfidf, y_test, test_size=.2)
-      Xtrainv, Xtestv, ytrainv, ytestv = train_test_split(X_vec_test[1], y_test, test_size=.2)
-      Xtraing, Xtestg, ytraing, ytestg = train_test_split(X_test_vec_gensim, y_test, test_size=.2)
-     
-      RandomForestMSE_tfidf = ModelEvaluation(RandomForestclf_tfidf, X_test=Xtestc, y_test= ytestc, build=False)
-      RandomForestMSE_vec_spacy = ModelEvaluation(RandomForestclf_vec_spacy, X_test=Xtestv, y_test= ytestv, build=False)
-      RandomForestMSE_vec_gensim = ModelEvaluation(RandomForestclf_vec_gensim, X_test=Xtestg, y_test= ytestg, build=False)
-
-      modelScores = {'Gensim Doc2Vec' : RandomForestMSE_vec_gensim, 'Spacy Doc2Vec' :RandomForestMSE_vec_spacy, 'TFIDF' : RandomForestMSE_tfidf}
-      data.append(modelScores)
-
+    data = MultiModelEvaluation()
     df_MSE = pd.DataFrame(data)
     modelTimeTrain = {'Data Featurization Type': ['Gensim Doc2Vec','Spacy Doc2Vec', 'TFIDF'], 'Time To Train Model' : [gensim_build_time, spacy_build_time, tfidf_build_time]}
 
-    bar_plot('Mean Squared Error', 'MSE for Data Featurization', 'images/Model_MSE.png', Box=True, df = df_MSE)
-    bar_plot('Time (Seconds)', 'Time to Train Model', 'images/Model_Time_Train.png', Dict = modelTimeTrain)
+    bar_plot('Mean Squared Error', 'MSE for Data Featurization', 'images/Model_MSE_medium.png', Box=True, df = df_MSE)
+    bar_plot('Time (Seconds)', 'Time to Train Model', 'images/Model_Time_medium_Train.png', Dict = modelTimeTrain)

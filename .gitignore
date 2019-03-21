@@ -2,3 +2,5 @@ data/
 src/__pycache__/
 src/test.py
 /logs
+/DocVecgensim.txt
+/DocVecspacy.txt
