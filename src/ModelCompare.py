@@ -40,7 +40,7 @@ def Get_Corpus(fileName, get_y = True, is_WordVec = False, plot = False):
     
   corpus = df.review_body.copy().values
 
-def scree_plot(ax, pca, n_components_to_plot=8, title='PCA Scree Plot'):
+def scree_plot(ax, pca, title='PCA Scree Plot'):
     """Make a scree plot showing the variance explained (i.e. variance
     of the projections) for the principal components in a fit sklearn
     PCA object.
@@ -52,10 +52,7 @@ def scree_plot(ax, pca, n_components_to_plot=8, title='PCA Scree Plot'):
       
     pca: sklearn.decomposition.PCA object.
       A fit PCA object.
-      
-    n_components_to_plot: int
-      The number of principal components to display in the scree plot.
-      
+
     title: str
       A title for the scree plot.
     """
@@ -64,6 +61,7 @@ def scree_plot(ax, pca, n_components_to_plot=8, title='PCA Scree Plot'):
     vals = pca.explained_variance_ratio_
     ax.plot(ind, vals, color='blue')
     ax.scatter(ind, vals, color='blue', s=50)
+    ax.axvline(x=250)
 
     ax.set_xlabel("Principal Component", fontsize=12)
     ax.set_ylabel("Variance Explained (%)", fontsize=12)
@@ -111,8 +109,6 @@ def bar_plot(Dict, y_label, title, save_file, legend=False):
     ax = df.plot(kind='bar', x='Data Featurization Type', rot=0, legend=legend)
     ax.set_ylabel(y_label)
     ax.set_title(title)
-    if legend:
-      ax.get_legend().set_bbox_to_anchor((1,1.2))
     for i in ax.patches:
       ax.annotate(str(i.get_height())[:5], (i.get_x(), i.get_height() * 1.01))
     plt.savefig(save_file)
@@ -131,8 +127,8 @@ def Document_Save_to_file(filename, corpus, word_vec):
           f.write('\n')
 
 if __name__ == "__main__":
-    y, corpus = Get_Corpus('data/Amz_book_review_medium.parquet', plot=False)
-    word_vec = Get_Corpus('data/Amz_book_review_medium_vector.parquet', get_y=False, is_WordVec=True)
+    y, corpus = Get_Corpus('data/Amz_book_review_short.parquet', plot=False)
+    word_vec = Get_Corpus('data/Amz_book_review_short_vector.parquet', get_y=False, is_WordVec=True)
     
     # corpus_big, corpus_short, y_big, y_short = ModelSplitting(corpus, y, .25)
     # word_vec, word_vec_short, y_big, y_short = ModelSplitting(word_vec, y, .25)
@@ -148,15 +144,15 @@ if __name__ == "__main__":
                         ('tfidf', TfidfTransformer())
     ])
 
-    pca = PCA(n_components=100)
+    pca = PCA()
     X_train_tfidf = text_vect.fit_transform(X_train_tfidf).todense()
     X_test_tfidf = text_vect.transform(X_test_tfidf).todense()
     X_train_tfidf = pca.fit_transform(X_train_tfidf)
     X_test_tfidf = pca.transform(X_test_tfidf)
     
-    # fig, ax = plt.subplots(figsize=(8,6))
-    # scree_plot(ax, pca, n_components_to_plot=5000)
-    # plt.savefig('images/Screeplot.png')
+    fig, ax = plt.subplots(figsize=(8,6))
+    scree_plot(ax, pca)
+    plt.savefig('images/Screeplot.png')
 
     X_smt_tfidf, y_smt_tfidf = Smote(X_train_tfidf, y_train_tfidf)
     X_smt_vec_spacy, y_smt_vec_spacy = Smote(X_train_vec_spacy, y_train_vec_spacy)
@@ -189,7 +185,7 @@ if __name__ == "__main__":
 
     # comparing the models
     modelScores = {'Data Featurization Type': ['Gensim Doc2Vec','Spacy Doc2Vec', 'TFIDF'], 'Mean Squared Error' : [RandomForestMSE_vec_gensim, RandomForestMSE_vec_spacy, RandomForestMSE_tfidf]}
-    modelTime = {'Data Featurization Type': ['Gensim Doc2Vec','Spacy Doc2Vec', 'TFIDF'], 'Time To Build Model' : [gensim_build_time, spacy_build_time, tfidf_build_time], 'Time to Predict' : [gensim_predict_time, spacy_predict_time, tfidf_predict_time]}
+    modelTime = {'Data Featurization Type': ['Gensim Doc2Vec','Spacy Doc2Vec', 'TFIDF'], 'Time To Train Model' : [gensim_build_time, spacy_build_time, tfidf_build_time], 'Time to Predict' : [gensim_predict_time, spacy_predict_time, tfidf_predict_time]}
 
-    bar_plot(modelScores, 'Mean Squared Error', 'MSE for Data Featurization', 'images/Model_MSE_medium.png')
-    bar_plot(modelTime, 'Time (Seconds)', 'Model Time for Data Featurization', 'images/Model_Time_medium.png', legend=True)
+    bar_plot(modelScores, 'Mean Squared Error', 'MSE for Data Featurization', 'images/Model_MSE.png')
+    bar_plot(modelTime, 'Time (Seconds)', 'Model Time for Data Featurization', 'images/Model_Time.png', legend=True)

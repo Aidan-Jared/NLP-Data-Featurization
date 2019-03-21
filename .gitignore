@@ -1,5 +1,4 @@
 data/
 src/__pycache__/
 src/test.py
-src/Word2Vect.py
 /logs

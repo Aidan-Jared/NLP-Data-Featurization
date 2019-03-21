@@ -2,8 +2,8 @@
 
 ![alt_text](images/headImage.png)
 
-
 ## Table of Contents
+- [Introduction](#introduction)
 - [EDA](#eda)
 - [Data Vectorization](#data-vectorization)
     - [Bag-of-Words](#bag-of-words)
@@ -18,9 +18,10 @@
 - [Future Direction](#future-direction)
 - [Acknowledgments](#acknowledgments)
 
-
-
+## Introduction
 For this second capstone I decided to investigate how well the different data featurization methods perform. In order to test this out I decided to use the Amazon reveiw dataset provided by Amazon because the data included many different writen reveiws along side the star reveiws given by each users. This alowed me to work with scalable data and to test how well the methods were performing.
+
+[Back to Top](#table-of-contents)
 
 ## EDA
 
@@ -41,13 +42,19 @@ To fix this probelm I decided on SMOTE the data. In order to do this I train tes
 ![alt_text](images/SMOTE_class_distributions.png)
 <sub><sub><sub><sub><sub>much better</sub></sub></sub></sub></sub>
 
+[Back to Top](#table-of-contents)
+
 ## Data Vectorization
 
 Even though this project is focused on strings, we still need to vectorize the data so that the models we use to predict will understand the data its looking at. The most common way to do this is the Bag-of-Words model but there has been a new development called Doc2Words.
 
+[Back to Top](#table-of-contents)
+
 ### Bag-of-Words
 
 Bag-of-Words works by creating a matrix where the rows are the documents of the corpus and the columns are the vocabulary. After you build the Bag-of-Words model you tend to make it into a tfidf (Term Frequency Inverse Document frequency) where the terms are the frequency a word apears in a document times how much information the word provides across the corpus.
+
+[Back to Top](#table-of-contents)
 
 ### Doc2Vec
 
@@ -63,17 +70,23 @@ Doc2Vec is very simular but it adds in the additional input of a document vector
 
 A good comparison for Bag-of-words and Doc2Vec is that Bag-of-words is the frequensist aproach to nlp while Doc2Vec and Word2Vec are the Bayesin aproach.
 
+[Back to Top](#table-of-contents)
+
 ## Creating the Featurizations
 
 In order to study how well these different featurizations perform I first had to figure out what tools and methods to use.
 
+[Back to Top](#table-of-contents)
+
 ### Bag-of-words
 
-For the Bag-of-words I decided to just use sklearns prebuilt tools and use PCA to reduce the dementionality. I first used the count vectorizor and then the Tfidf Transformer and I only looked at the top 5000 words to reduce the size. After this I trained the model on the training data and then transformed the test data. After this I looked at what the best choice for the number of componets in PCA would be to speed up the calculation.
+For the Bag-of-words I decided to just use sklearns prebuilt tools and use PCA to reduce the dementionality. I first used the count vectorizor and then the Tfidf Transformer to set up the vectors. After this I trained the model on the training data and then transformed the test data. After this I looked at what the best choice for the number of componets in PCA would be to speed up the calculation.
 
 ![alt_text](images/Screeplot.png)
 
-From this scree plot it looks like 100 componets will work best which is a large reduction in dimentionality which should speed up the computation.
+From this scree plot it looks like 250 componets will work best which is a large reduction in dimentionality which should speed up the computation.
+
+[Back to Top](#table-of-contents)
 
 ### Doc2Vect
 
@@ -103,13 +116,15 @@ and acording to my gensim built on 20000 datapoints:
 
 |Original Document|Most Simular|Least Simular|
 |-----------------|------------|-------------|
-||||
-||||
-||||
-||||
-||||
+|good reading very think provoking and compelling too bad its not true the big fallacy lie in the basic story itself corso leak alien technology information into private industry during the cold war the basic story contradict itself corso himself state|I must not understand black hole one of smolin most interesting conjecture in this book be that the big bang of our universe be just the rebound from the collapse of black hole within some large universe and that within all black hole|great condition|
+|the groom be describe as have green eye few page later he have brown eye that type of discrepancy be distract at good the dialogue be not appropriate for the time period and the character be not fully develop It start out well then quickly fizzle out|great book and great series I particularly enjoy learn some history while I enjoy good story I highly recommend it|good good book|
+|if you have read book like positive thinking by napoleon hill or clement stone this book be sort of copycat nothing new sorry|I enjoy see the whimsical painting of ted geisel dr seuss the book have have place of honor on my coffee table|great prayerbook|
+|this be the second book I have read write by dr lee the book be great if you want scientific datum it be there but he explain it in such an oversimplified way that it be easy to apply his finding to your own health after read the book|re post though edit from blog I read through stanley grenz reason for hope the systematic theology of wolfhart pannenberg as well as few article by pannenberg over the course of week as diversion from the frantic preparation for move from country to another|cute cute cute|
+|this excellent biography miss the most common pitfall it do not engage in hagiography nor do it treat the subject in condescending way It be well research and well write highly recommend to anyone interested in margery allingham|this series be nothing but amazing from start to finish the twice lost be beautiful exciting and very very sad these book make the possibility of mermaid more real than ever this book be heart wrench ending to wonderful story great read for all age|good good book|
 
 As you can see there is some understadable realationship between each of these documents for what spacy produces with non-english reviews always beeing the most dissimular. With Gensim however the results seem a bit more random which I belive comes from how small the training set was (less than 2000 documents) which makes it a weaker model at the moment. But since I can train the gensim model I think that increasing the amount of data it trains on would inprove its results.
+
+[Back to Top](#table-of-contents)
 
 ## Performance
 
@@ -125,6 +140,8 @@ Most of these are the defualt parameters of sklearn which in some cases makes th
 
 The hyperparameters that are changed from the default do make some amount of sense. because This is a large data set outliers would be much less likely which means bootstrapping is not needed to simulate the population so the full data set can be used to make the model. Min Samples split is the minimum amount of samples needed in a leaf to split and it does make sense that it would default to a smaller number because that helps the leafs split to the minimum samples per leaf. With the Tfidf and Gensim models I think that the min sample split became 3 because two values ended up being very close together and tended to end in the same node producing much better results than if these two samples were to be split apart. And lastly the number of estimators ended just shy of 100 because even though the random forest model each tree purposfully overfits the data, but if you make to many trees you start capturing the noise even though you are selecting the average results of all the trees.
 
+[Back to Top](#table-of-contents)
+
 ### 2000 Data points
 
 After training the predicting off of these modes I found the following results with a data set of 2000 points:
@@ -139,6 +156,8 @@ From this you can see that tfidf had the fastest build time and its predict time
 
 What in this case I think that I would pick spacy for data featurization because it has the best MSE and is in the medium for building and predict time.
 
+[Back to Top](#table-of-contents)
+
 ### 20000 Data points
 
 To See what happens with more data points I increased the amount of data and re-ran the code to see how the data would perform
@@ -151,6 +170,8 @@ To See what happens with more data points I increased the amount of data and re-
 
 
 
+[Back to Top](#table-of-contents)
+
 ## Conclusion
 
 If we look at both of these metrics, I would choose to use spacy because it performs only slightly worse than Tfidf but it trains the model the fastest and is tied for predict time. I belive that if the data was scalled up further or no pca being implimented spacy would massivly out perform Tfidf on the time while producing comparable MSE.
@@ -159,15 +180,21 @@ With Gensim I think that it is performing the worst because I am building my own
 
 In conclusion, it seems that in smaller datasets Tfidf performs the best but that Doc2Vec will inprove with larger datasets and more traning time.
 
+[Back to Top](#table-of-contents)
+
 ## Future Direction
 
-I plan on taking this dataset and the tools that I have learned to start applying Doc2Vec into deep learning in order to build much stronger models on larger data.
+I plan on taking this dataset and the tools that I have learned to start applying Doc2Vec into deep learning in order to build much stronger models on larger data. Some intresting things to look at is using Doc2Vec and review scores to make a recomendation system baised on the users writen review.
+
+[Back to Top](#table-of-contents)
 
 ## Acknowledgments
 
-- [Taite Sandefer](https://github.com/tsandefer) For helping me understand Doc2Vec and sending me papers and some of her code
+- [Taite Sandefer](https://github.com/tsandefer) For helping me understand Doc2Vec and sending me papers and some code
 - The Galvanize Instructor team for helping me with code and narrowing my focus
 - [The Paper](http://www.aclweb.org/anthology/W16-1609) by Jey Han Lau and Timothy Baldwin for Evaluation and setting up a Doc2Vec model
 - [The Video](https://www.youtube.com/watch?v=zFScws0mb7M) From Rober Meyer explaning what Doc2vec is and what tools to use
 - [This Article](https://towardsdatascience.com/yet-another-twitter-sentiment-analysis-part-1-tackling-class-imbalance-4d7a7f717d44) by Ricky Kim for an explanation and the code to clean text using spacy
 - Amazon for providing the [data set](https://registry.opendata.aws/amazon-reviews/) for this capstone
+
+[Back to Top](#table-of-contents)
