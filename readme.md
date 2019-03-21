@@ -93,21 +93,21 @@ Here is what I get from gensim on only 2000 datapoints:
 
 |Original Document|Most Simular|Least Simular|
 |-----------------|------------|-------------|
-|Good info.|Nice book good instructions|I love this s***|
-|We ordered this through the publisher, Scholastic.  Since it was for a six-year old, I was disappointed to find that it wasn't a picture book.  It was a chapter book with one illustration per chapter.    My son, however, wasn't the least put off by the lack of drawings.|Excellent story of the DeMeo gang of Brooklyn. Very powerful accounts of the brutality of "that life". Does a very nice job of giving a look into the other side of the Gambino family|GREAT|
-|Kids enjoyed doodle book.|Excelente libro, te capta, te entretiene, aprendes, te ries,|thank you|
-|The content is accessible and well organized for quick acquisition of knowledge for teaching students, residents and colleagues not to mention for the reader as well.|I was very disappointed in this novel. I was expecting something to the effect of The Red Tent (which I thought was great), since it was compared to it on the inside cover.|GREAT|
-|I'm very pleased with this little Bible. I like that I can easily carry it with me most anywhere. I wanted a SMALL Bible, and this is perfect.|This novel was recommended by my cousins wife who is a preacher.  My son had laid a penny on my mothers heart as we laid her to rest.|GREAT|
+|Good info.|This purchase exceeded my expectations.|WaWaWeeWa|
+|We ordered this through the publisher, Scholastic.  Since it was for a six-year old, I was disappointed to find that it wasn't a picture book.  It was a chapter book with one illustration per chapter.    My son, however, wasn't the least put off by the lack of drawings.|I have not read one of the Shannara books since the 1990's but an so happy to have been able to pick this one up and feel like I have come home from a long time away.  Terry Brooks has not lost his touch and now I know I will have to pick up everything in between the last book I read and this one.|GREAT|
+|Kids enjoyed doodle book.|Enjoyed it a lot!|great|
+|The content is accessible and well organized for quick acquisition of knowledge for teaching students, residents and colleagues not to mention for the reader as well. The references are either classic or outdated. A lot of work and time went into the preparation of this book. Are the authors and editors planning to revise and publish a more recent edition?|The parallels that Danelek draws between this ancient society and our modern day lifestyle are shocking.  Deviating from Plato's original concept of Atlantis, the author paints a picture of a technological age vastly similar to life in the 21st century.|GREAT|
+|I'm very pleased with this little Bible. I like that I can easily carry it with me most anywhere. I wanted a SMALL Bible, and this is perfect. The print is "average" size for what you'd find in an average sized Bible.|'Drinking Coffee Elsewhere' is an absolute knockout.  You may or may not have heard of ZZ Packer already [she had a story 'Brownies', in the New Yorker]but if you don't know her, you should. The eight stories in this collection are all wonderful,|great|
 
 and acording to my gensim built on 20000 datapoints:
 
 |Original Document|Most Simular|Least Simular|
 |-----------------|------------|-------------|
-|Good info.|or what this book actually is, it needs to be downsized and released in an affordable paperback printing.|Great!|
-|We ordered this through the publisher, Scholastic.  Since it was for a six-year old, I was disappointed|District Ranger Anna Pigeon of Rocky Mountains National Park is going to have wolves in the park;|CLASSIC!|
-Kids enjoyed doodle book.|I got this as a gift for my son. Iwould reconmend it anyone. It arrived on time and in god condition.|will be great for baby gift|
-|The content is accessible and well organized for quick acquisition of knowledge for teaching students, residents and colleagues not to mention for the reader as well. The references are either classic or outdated. A lot of work and time went into the preparation of this book. Are the authors and editors planning to revise and publish a more recent edition?|Review: FORGED (World of the Nightwalkers, Book 4) by Jacquelyn Frank Release Date: April 29, 2014 Reviewed by: Reading in Pajamas/ Donna Rated: 4 Stars Blog Post: [...]|CLASSIC!|
-|I'm very pleased with this little Bible. I like that I can easily carry it with me most anywhere. I wanted a SMALL Bible, and this is perfect.|So many travelers dream of visiting or regularly visit Paris!  We were last there for a week in 2013 and I used that year's edition of the Lonely Planet Paris guide|CLASSIC!|
+||||
+||||
+||||
+||||
+||||
 
 As you can see there is some understadable realationship between each of these documents for what spacy produces with non-english reviews always beeing the most dissimular. With Gensim however the results seem a bit more random which I belive comes from how small the training set was (less than 2000 documents) which makes it a weaker model at the moment. But since I can train the gensim model I think that increasing the amount of data it trains on would inprove its results.
 
@@ -131,15 +131,25 @@ After training the predicting off of these modes I found the following results w
 
 ![alt_test](images/Model_MSE.png)
 
-As you can see Tfidif had the lowest MSE but it is only slightly different than spacy while gensim performed the words. But this is only one metric so now lets look at the time
+As you can see Spacy had the lowest MSE and Gensim and Tfidf have simular MSE. But this is only one metric so now lets look at the time
 
 ![alt_test](images/Model_Time.png)
 
-From this you can see that spacy had the fastest build time and its predict time is tied with gensim. As a point of comparison rember that both of the Doc2Vec methods produce vecors of length 300 while tfidf is only 100 items long.
+From this you can see that tfidf had the fastest build time and its predict time is tied with spacy. As a point of comparison rember that both of the Doc2Vec methods produce vecors of length 300 while tfidf is only 100 items long.
+
+What in this case I think that I would pick spacy for data featurization because it has the best MSE and is in the medium for building and predict time.
 
 ### 20000 Data points
 
-To test my theories I then decided to use 20000 data points to see how increasing the amount of data would change the Gensim model and the Tfidf speed.
+To See what happens with more data points I increased the amount of data and re-ran the code to see how the data would perform
+
+![alt_text](images/Model_MSE_medium.png)
+
+
+
+![alt_text](images/Model_Time_medium.png)
+
+
 
 ## Conclusion
 
