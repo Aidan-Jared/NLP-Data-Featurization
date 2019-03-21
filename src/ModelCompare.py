@@ -127,8 +127,8 @@ def Document_Save_to_file(filename, corpus, word_vec):
           f.write('\n')
 
 if __name__ == "__main__":
-    y, corpus = Get_Corpus('data/Amz_book_review_short.parquet', plot=False)
-    word_vec = Get_Corpus('data/Amz_book_review_short_vector.parquet', get_y=False, is_WordVec=True)
+    y, corpus = Get_Corpus('data/Amz_book_review_medium.parquet', plot=False)
+    word_vec = Get_Corpus('data/Amz_book_review_medium_vector.parquet', get_y=False, is_WordVec=True)
     
     # corpus_big, corpus_short, y_big, y_short = ModelSplitting(corpus, y, .25)
     # word_vec, word_vec_short, y_big, y_short = ModelSplitting(word_vec, y, .25)
@@ -144,15 +144,15 @@ if __name__ == "__main__":
                         ('tfidf', TfidfTransformer())
     ])
 
-    pca = PCA()
+    pca = PCA(n_components=250)
     X_train_tfidf = text_vect.fit_transform(X_train_tfidf).todense()
     X_test_tfidf = text_vect.transform(X_test_tfidf).todense()
     X_train_tfidf = pca.fit_transform(X_train_tfidf)
     X_test_tfidf = pca.transform(X_test_tfidf)
     
-    fig, ax = plt.subplots(figsize=(8,6))
-    scree_plot(ax, pca)
-    plt.savefig('images/Screeplot.png')
+    # fig, ax = plt.subplots(figsize=(8,6))
+    # scree_plot(ax, pca)
+    # plt.savefig('images/Screeplot.png')
 
     X_smt_tfidf, y_smt_tfidf = Smote(X_train_tfidf, y_train_tfidf)
     X_smt_vec_spacy, y_smt_vec_spacy = Smote(X_train_vec_spacy, y_train_vec_spacy)
@@ -185,7 +185,9 @@ if __name__ == "__main__":
 
     # comparing the models
     modelScores = {'Data Featurization Type': ['Gensim Doc2Vec','Spacy Doc2Vec', 'TFIDF'], 'Mean Squared Error' : [RandomForestMSE_vec_gensim, RandomForestMSE_vec_spacy, RandomForestMSE_tfidf]}
-    modelTime = {'Data Featurization Type': ['Gensim Doc2Vec','Spacy Doc2Vec', 'TFIDF'], 'Time To Train Model' : [gensim_build_time, spacy_build_time, tfidf_build_time], 'Time to Predict' : [gensim_predict_time, spacy_predict_time, tfidf_predict_time]}
+    modelTimeTrain = {'Data Featurization Type': ['Gensim Doc2Vec','Spacy Doc2Vec', 'TFIDF'], 'Time To Train Model' : [gensim_build_time, spacy_build_time, tfidf_build_time]}
+    modelTimePred = {'Data Featurization Type': ['Gensim Doc2Vec','Spacy Doc2Vec', 'TFIDF'], 'Time to Predict' : [gensim_predict_time, spacy_predict_time, tfidf_predict_time]}
 
-    bar_plot(modelScores, 'Mean Squared Error', 'MSE for Data Featurization', 'images/Model_MSE.png')
-    bar_plot(modelTime, 'Time (Seconds)', 'Model Time for Data Featurization', 'images/Model_Time.png', legend=True)
+    bar_plot(modelScores, 'Mean Squared Error', 'MSE for Data Featurization', 'images/Model_MSE_medium.png')
+    bar_plot(modelTimeTrain, 'Time (Seconds)', 'Time to Train Model', 'images/Model_Time_medium_Train.png')
+    bar_plot(modelTimePred, 'Time (Seconds)', 'Time to Predict from Model', 'images/Model_Time_medium_Predict.png')

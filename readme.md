@@ -122,7 +122,7 @@ and acording to my gensim built on 20000 datapoints:
 |this be the second book I have read write by dr lee the book be great if you want scientific datum it be there but he explain it in such an oversimplified way that it be easy to apply his finding to your own health after read the book|re post though edit from blog I read through stanley grenz reason for hope the systematic theology of wolfhart pannenberg as well as few article by pannenberg over the course of week as diversion from the frantic preparation for move from country to another|cute cute cute|
 |this excellent biography miss the most common pitfall it do not engage in hagiography nor do it treat the subject in condescending way It be well research and well write highly recommend to anyone interested in margery allingham|this series be nothing but amazing from start to finish the twice lost be beautiful exciting and very very sad these book make the possibility of mermaid more real than ever this book be heart wrench ending to wonderful story great read for all age|good good book|
 
-As you can see there is some understadable realationship between each of these documents for what spacy produces with non-english reviews always beeing the most dissimular. With Gensim however the results seem a bit more random which I belive comes from how small the training set was (less than 2000 documents) which makes it a weaker model at the moment. But since I can train the gensim model I think that increasing the amount of data it trains on would inprove its results.
+With the spacy modle we as humans can see some relationship between the documents which does show that Doc2Vec produces simular vectors for simular documents. Gensim on the other hand is a bit more random which makes a lot of sense when you think that it was trained on a much smaller set of data than spacy likely was.
 
 [Back to Top](#table-of-contents)
 
@@ -150,9 +150,9 @@ After training the predicting off of these modes I found the following results w
 
 As you can see Spacy had the lowest MSE and Gensim and Tfidf have simular MSE. But this is only one metric so now lets look at the time
 
-![alt_test](images/Model_Time.png)
+![alt_test](images/Model_Time_Train.png)
 
-From this you can see that tfidf had the fastest build time and its predict time is tied with spacy. As a point of comparison rember that both of the Doc2Vec methods produce vecors of length 300 while tfidf is only 100 items long.
+From this you can see that tfidf had the lowest time to train, but it is so close to Spacy I think these can be thought of as taking the same time. As a point of comparison rember that both of the Doc2Vec methods produce vecors of length 300 while tfidf is only 100 items long.
 
 What in this case I think that I would pick spacy for data featurization because it has the best MSE and is in the medium for building and predict time.
 
@@ -164,21 +164,19 @@ To See what happens with more data points I increased the amount of data and re-
 
 ![alt_text](images/Model_MSE_medium.png)
 
+Once again the spacy Doc2Vec is performing the best while Gensim is performing the worst.
 
+![alt_text](images/Model_Time_medium_Train.png)
 
-![alt_text](images/Model_Time_medium.png)
-
-
+And when we look at the training time, Tfidf trains the fastest but in this case it is most likely due to the PCA that was applied to it earlier.
 
 [Back to Top](#table-of-contents)
 
 ## Conclusion
 
-If we look at both of these metrics, I would choose to use spacy because it performs only slightly worse than Tfidf but it trains the model the fastest and is tied for predict time. I belive that if the data was scalled up further or no pca being implimented spacy would massivly out perform Tfidf on the time while producing comparable MSE.
+If we look at both of these metrics and both data sets, spacy performs the best in MSE and is only sligtly slower than Tfidf in traning time. With gensim, it does perform the worst but from the research I have looked at, it seems that for a Doc2Vec to perform well it needs to train on a large amount of data (~ half a million). Even though I am using an out of the box model with spacy, the model that spacy is using has been trained on a lot more data than I have trained my gensim model on.
 
-With Gensim I think that it is performing the worst because I am building my own model which means that it only has so many data points to train on. Spacy performs well because it is a model that has already been built on a large amount of data while gensim has only been built on less than 2000 points of data. If I increased the size of my data set I belive that gensim would start to out perform spacy and Tfidf when looking at MSE and run in a simular amount of time to both spacy and Tfidf.
-
-In conclusion, it seems that in smaller datasets Tfidf performs the best but that Doc2Vec will inprove with larger datasets and more traning time.
+In conclusion, it seems that in smaller datasets Tfidf and spacy perform the best but acording to reasearch building a model will perform better in the long run.
 
 [Back to Top](#table-of-contents)
 
