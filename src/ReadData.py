@@ -15,11 +15,11 @@ if __name__ == "__main__":
     mask = df['marketplace'] == 'US'
     df = df[mask].dropna()
     df_thing, df_debug = train_test_split(df,test_size=.01, random_state=42, stratify=df['star_rating'])
-    df_final = df_debug.copy()
+    df_final = df_thing.copy().iloc[:10000]
 
-    for index, i in enumerate(df_debug['review_body']):
+    for index, i in enumerate(df_final['review_body']):
         html = markdown(i)
         Text = ' '.join(BeautifulSoup(html).findAll(text=True))
-        corpus = TextFormating(Text, nlp)(vectorize=False)
+        corpus = TextFormating(Text, nlp)(vectorize=True)
         df_final['review_body'].iloc[index] = corpus
-    df_final.to_parquet('data/Amz_book_review_medium.parquet')
+    df_final.to_parquet('data/Amz_book_review_test_vector.parquet')
