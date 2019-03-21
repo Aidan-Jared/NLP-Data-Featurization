@@ -84,7 +84,7 @@ For the Bag-of-words, I decided to just use sklearns prebuilt tools and use PCA 
 
 ![alt_text](images/Screeplot.png)
 
-From this scree plot, it looks like 250 components will work best which is a large reduction in dimensionality which should speed up the computation.
+From this scree plot, it looks like 1000 components will work best because it is capturing just about 90% of the variance.
 
 [Back to Top](#table-of-contents)
 
@@ -148,13 +148,13 @@ After training the predicting off of these modes I found the following results w
 
 ![alt_test](images/Model_MSE.png)
 
-As you can see spaCy had the lowest MSE and Gensim and Tfidf have similar MSE. But this is only one metric so now let us look at the time
+As you can see spaCy had the lowest MSE across all Test sets while Tfidf performed better than gensim, there is a bit of overlap between their MSE's 
 
 ![alt_test](images/Model_Time_Train.png)
 
-From this, you can see that tfidf had the lowest time to train, but it is so close to spaCy I think these can be thought of as taking the same time. As a point of comparison remember that both of the Doc2Vec methods produce vectors of length 300 while tfidf is only 100 items long.
+From this, you can see that tfidf had the hightest time to train, While gensim and spaCy took just about the same time to train. As a point of comparison remember that both of the Doc2Vec methods produce vectors of length 300 while tfidf is 1000 items long.
 
-What in this case I think that I would pick spaCy for data featurization because it has the best MSE and is in the medium for building and predict time.
+What in this case I think that I would pick spaCy for data featurization because it has the best MSE and is tied for build time at lower levels.
 
 [Back to Top](#table-of-contents)
 
@@ -164,19 +164,19 @@ To See what happens with more data points I increased the amount of data and re-
 
 ![alt_text](images/Model_MSE_medium.png)
 
-Once again the spaCy Doc2Vec is performing the best while Gensim is performing the worst.
+Once again the spaCy Doc2Vec is performing the best while gensim is performing the worst. and Tfidf is close to having an overlap with spaCy.
 
 ![alt_text](images/Model_Time_medium_Train.png)
 
-And when we look at the training time, Tfidf trains the fastest but in this case, it is most likely due to the PCA that was applied to it earlier.
+And when we look at the training time, Tfidf trains the slowest by a wide margin and spacy has the fastest training time.
 
 [Back to Top](#table-of-contents)
 
 ## Conclusion
 
-If we look at both of these metrics and both data sets, spaCy performs the best in MSE and is only slightly slower than Tfidf in training time. With gensim, it does perform the worst but from the research I have looked at, it seems that for a Doc2Vec to perform well it needs to train on a large amount of data (~ half a million). Even though I am using an out of the box model with spaCy, the model that spaCy is using has been trained on a lot more data than I have trained my gensim model on.
+If we look at both of these metrics and both data sets, spaCy performs the best in MSE and in training time. With gensim, it does perform the worst but from the research I have looked at, it seems that for a Doc2Vec to perform well it needs to train on a large amount of data (~ half a million). Even though I am using an out of the box model with spaCy, the model that spaCy is using has been trained on a lot more data than I have trained my gensim model on.
 
-In conclusion, it seems that in smaller datasets Tfidf and spaCy perform the best but according to research building a model will perform better in the long run.
+In conclusion, it seems that in smaller datasets spaCy perform the best but according to research building a model will perform better in the long run.
 
 [Back to Top](#table-of-contents)
 
