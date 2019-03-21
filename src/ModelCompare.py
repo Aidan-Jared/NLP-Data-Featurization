@@ -20,7 +20,10 @@ def Get_Corpus(fileName, get_y = True, is_WordVec = False, plot = False):
   df = pq.read_table(fileName).to_pandas()
   if plot:
     barplotdf = df['star_rating'].value_counts()
-    barplotdf.plot(kind='bar')
+    ax = barplotdf.plot(kind='bar')
+    ax.set_xlabel('Catigories', fontsize=12)
+    ax.set_ylabel('Count', fontsize=12)
+    ax.set_title("Starting Class Distributions", fontsize=16)
     plt.savefig('images/starting_class_distributions.png')
   if is_WordVec:
     word_vec=[]
@@ -56,12 +59,10 @@ def scree_plot(ax, pca, title='PCA Scree Plot'):
     title: str
       A title for the scree plot.
     """
-    num_components = pca.n_components_
-    ind = np.arange(num_components)
     vals = pca.explained_variance_ratio_
-    ax.plot(ind, vals, color='blue')
-    ax.scatter(ind, vals, color='blue', s=50)
-    ax.axvline(x=250)
+    cum_var = np.cumsum(vals)
+    ax.plot(range(len(vals) + 1), np.insert(cum_var, 0, 0), color='blue', marker='o')
+    ax.axvline(x=1000)
 
     ax.set_xlabel("Principal Component", fontsize=12)
     ax.set_ylabel("Variance Explained (%)", fontsize=12)
@@ -74,7 +75,10 @@ def Smote(X, y, random_state = 42, k_neighbors=3, plot = False):
       if plot:
         df_temp = pd.DataFrame(y_smt, columns=['star_rating'])
         df_temp = df_temp['star_rating'].value_counts()
-        df_temp.plot(kind='bar')
+        ax = df_temp.plot(kind='bar')
+        ax.set_xlabel('Catigories', fontsize=12)
+        ax.set_ylabel('Count', fontsize=12)
+        ax.set_title("SMOTED Class Distributions", fontsize=16)
         plt.savefig('images/SMOTE_class_distributions.png')
       return X_smt, y_smt
 
@@ -127,8 +131,8 @@ def Document_Save_to_file(filename, corpus, word_vec):
           f.write('\n')
 
 if __name__ == "__main__":
-    y, corpus = Get_Corpus('data/Amz_book_review_medium.parquet', plot=False)
-    word_vec = Get_Corpus('data/Amz_book_review_medium_vector.parquet', get_y=False, is_WordVec=True)
+    y, corpus = Get_Corpus('data/Amz_book_review_short.parquet', plot=True)
+    word_vec = Get_Corpus('data/Amz_book_review_short_vector.parquet', get_y=False, is_WordVec=True)
     
     # corpus_big, corpus_short, y_big, y_short = ModelSplitting(corpus, y, .25)
     # word_vec, word_vec_short, y_big, y_short = ModelSplitting(word_vec, y, .25)
@@ -144,7 +148,7 @@ if __name__ == "__main__":
                         ('tfidf', TfidfTransformer())
     ])
 
-    pca = PCA(n_components=250)
+    pca = PCA(n_components=1000)
     X_train_tfidf = text_vect.fit_transform(X_train_tfidf).todense()
     X_test_tfidf = text_vect.transform(X_test_tfidf).todense()
     X_train_tfidf = pca.fit_transform(X_train_tfidf)
@@ -154,7 +158,7 @@ if __name__ == "__main__":
     # scree_plot(ax, pca)
     # plt.savefig('images/Screeplot.png')
 
-    X_smt_tfidf, y_smt_tfidf = Smote(X_train_tfidf, y_train_tfidf)
+    X_smt_tfidf, y_smt_tfidf = Smote(X_train_tfidf, y_train_tfidf, plot=True)
     X_smt_vec_spacy, y_smt_vec_spacy = Smote(X_train_vec_spacy, y_train_vec_spacy)
     X_smt_vec_gensim, y_smt_vec_gensim = Smote(X_train_vec_gensim, y_train_tfidf)
 
