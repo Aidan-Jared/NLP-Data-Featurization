@@ -15,6 +15,7 @@ from imblearn.over_sampling import SMOTE
 from timeit import default_timer as timer
 import spacy
 plt.style.use('ggplot')
+np.random.seed(30)
 
 def Get_Corpus(fileName, get_y = True, is_WordVec = False, plot = False):
   df = pq.read_table(fileName).to_pandas()
@@ -154,8 +155,8 @@ if __name__ == "__main__":
 
     X_train_vec_gensim, X_test_vec_gensim = Doc2Vect(corpus, X_corpus_test)()
     
-    # Document_Save_to_file('DocVecspacy.txt', corpus, word_vec)
-    # Document_Save_to_file('DocVecgensim.txt', X_train_tfidf, X_train_vec_gensim)
+    Document_Save_to_file('DocVecspacy.txt', corpus, word_vec)
+    Document_Save_to_file('DocVecgensim.txt', corpus, X_train_vec_gensim)
     
     text_vect = Pipeline([
                         ('vect', CountVectorizer(max_features=5000, max_df=.85, min_df=2)),
