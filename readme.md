@@ -15,7 +15,6 @@
     - [2000 Data points](#2000-data-points)
     - [20000 Data points](#20000-data-points)
 - [Conclusion](#conclusion)
-- [Future Direction](#future-direction)
 - [Acknowledgments](#acknowledgments)
 
 ## Introduction
@@ -177,12 +176,6 @@ And when we look at the training time, Tfidf trains the slowest by a wide margin
 If we look at both of these metrics and both data sets, spaCy performs the best in MSE and in training time. With gensim, it does perform the worst but from the research I have looked at, it seems that for a Doc2Vec to perform well it needs to train on a large amount of data (~ half a million). Even though I am using an out of the box model with spaCy, the model that spaCy is using has been trained on a lot more data than I have trained my gensim model on.
 
 In conclusion, it seems that in smaller datasets spaCy perform the best but according to research building a model will perform better in the long run.
-
-[Back to Top](#table-of-contents)
-
-## Future Direction
-
-I plan on taking this dataset and the tools that I have learned to start applying Doc2Vec into deep learning in order to build much stronger models on larger data. Some interesting things to look at is using Doc2Vec and review scores to make a recommendation system based on the user's written review.
 
 [Back to Top](#table-of-contents)
 
